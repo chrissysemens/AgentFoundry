@@ -1,7 +1,7 @@
-import { randomUUID } from 'node:crypto';
-import { DatabaseSync } from 'node:sqlite';
-import { reduceEvents } from './domain.ts';
-import type { Event, Payload, State } from './domain.ts';
+import { randomUUID } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
+import { reduceEvents } from "./domain.ts";
+import type { Event, Payload, State } from "./domain.ts";
 
 export function makeEvent(
   ticket_id: string,
@@ -31,7 +31,12 @@ export class MemoryJournal implements Journal {
     return structuredClone(this.events.get(ticket) ?? []);
   }
 
-  append(ticket: string, type: string, actor: string, payload: Payload = {}): State {
+  append(
+    ticket: string,
+    type: string,
+    actor: string,
+    payload: Payload = {},
+  ): State {
     const e = makeEvent(ticket, type, actor, payload);
     const events = [...this.read(ticket), e];
     const s = reduceEvents(ticket, events);
@@ -70,24 +75,33 @@ export class SQLiteJournal implements Journal {
   read(ticket: string): Event[] {
     return (
       this.db
-        .prepare('SELECT event_json FROM events WHERE ticket_id=? ORDER BY sequence')
+        .prepare(
+          "SELECT event_json FROM events WHERE ticket_id=? ORDER BY sequence",
+        )
         .all(ticket) as { event_json: string }[]
     ).map((r) => JSON.parse(r.event_json) as Event);
   }
 
-  append(ticket: string, type: string, actor: string, payload: Payload = {}): State {
-    this.db.exec('BEGIN IMMEDIATE');
+  append(
+    ticket: string,
+    type: string,
+    actor: string,
+    payload: Payload = {},
+  ): State {
+    this.db.exec("BEGIN IMMEDIATE");
     try {
       const e = makeEvent(ticket, type, actor, payload);
       const state = reduceEvents(ticket, [...this.read(ticket), e]);
       this.db
-        .prepare('INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)')
+        .prepare(
+          "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",
+        )
         .run(e.event_id, ticket, JSON.stringify(e));
-      this.db.exec('COMMIT');
+      this.db.exec("COMMIT");
 
       return state;
     } catch (error) {
-      this.db.exec('ROLLBACK');
+      this.db.exec("ROLLBACK");
       throw error;
     }
   }

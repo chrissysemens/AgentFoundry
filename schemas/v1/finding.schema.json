@@ -4,7 +4,14 @@
   "title": "Oracle finding v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "category", "severity", "location", "evidence", "resolution"],
+  "required": [
+    "id",
+    "category",
+    "severity",
+    "location",
+    "evidence",
+    "resolution"
+  ],
   "properties": {
     "id": {
       "type": "string",

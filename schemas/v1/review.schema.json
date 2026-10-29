@@ -48,18 +48,10 @@
       "pattern": "^oracle:.+"
     },
     "scope": {
-      "enum": [
-        "INITIAL_FULL",
-        "INCREMENTAL",
-        "JUSTIFIED_FULL"
-      ]
+      "enum": ["INITIAL_FULL", "INCREMENTAL", "JUSTIFIED_FULL"]
     },
     "verdict": {
-      "enum": [
-        "ACCEPT",
-        "REJECT",
-        "INCONCLUSIVE"
-      ]
+      "enum": ["ACCEPT", "REJECT", "INCONCLUSIVE"]
     },
     "timestamp": {
       "type": "string",
@@ -139,9 +131,7 @@
             "const": "INCONCLUSIVE"
           }
         },
-        "required": [
-          "verdict"
-        ]
+        "required": ["verdict"]
       },
       "then": {
         "properties": {
@@ -150,9 +140,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "escalation_reason"
-        ]
+        "required": ["escalation_reason"]
       }
     },
     {
@@ -162,9 +150,7 @@
             "const": "INCREMENTAL"
           }
         },
-        "required": [
-          "scope"
-        ]
+        "required": ["scope"]
       },
       "then": {
         "properties": {
@@ -209,9 +195,7 @@
             "const": "JUSTIFIED_FULL"
           }
         },
-        "required": [
-          "scope"
-        ]
+        "required": ["scope"]
       },
       "then": {
         "properties": {
@@ -220,9 +204,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "scope_reason"
-        ]
+        "required": ["scope_reason"]
       }
     },
     {
@@ -232,9 +214,7 @@
             "const": "REJECT"
           }
         },
-        "required": [
-          "verdict"
-        ]
+        "required": ["verdict"]
       },
       "then": {
         "properties": {
@@ -244,23 +224,15 @@
               "type": "object",
               "properties": {
                 "category": {
-                  "enum": [
-                    "sip",
-                    "standard",
-                    "check"
-                  ]
+                  "enum": ["sip", "standard", "check"]
                 }
               },
-              "required": [
-                "category"
-              ]
+              "required": ["category"]
             },
             "minContains": 1
           }
         },
-        "required": [
-          "findings"
-        ]
+        "required": ["findings"]
       }
     },
     {
@@ -270,9 +242,7 @@
             "const": "ACCEPT"
           }
         },
-        "required": [
-          "verdict"
-        ]
+        "required": ["verdict"]
       },
       "then": {
         "properties": {
@@ -286,24 +256,15 @@
                 "type": "object",
                 "properties": {
                   "category": {
-                    "enum": [
-                      "sip",
-                      "standard",
-                      "check"
-                    ]
+                    "enum": ["sip", "standard", "check"]
                   }
                 },
-                "required": [
-                  "category"
-                ]
+                "required": ["category"]
               }
             }
           }
         },
-        "required": [
-          "checks_passed",
-          "findings"
-        ]
+        "required": ["checks_passed", "findings"]
       }
     }
   ]

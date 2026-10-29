@@ -40,15 +40,15 @@ npm run cli -- demo
 
 Available development commands:
 
-| Command | Purpose |
-| --- | --- |
-| `npm run verify` | Runtime check, formatting, lint, typecheck, tests, and smoke tests |
-| `npm test` | Run Vitest |
-| `npm run smoke` | Run workflow smoke tests |
-| `npm run format` | Format source and documentation |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checking |
-| `npm run cli -- demo` | Run the local demonstration |
+| Command               | Purpose                                                            |
+| --------------------- | ------------------------------------------------------------------ |
+| `npm run verify`      | Runtime check, formatting, lint, typecheck, tests, and smoke tests |
+| `npm test`            | Run Vitest                                                         |
+| `npm run smoke`       | Run workflow smoke tests                                           |
+| `npm run format`      | Format source and documentation                                    |
+| `npm run lint`        | Run ESLint                                                         |
+| `npm run typecheck`   | Run TypeScript type checking                                       |
+| `npm run cli -- demo` | Run the local demonstration                                        |
 
 ## Governance model
 
