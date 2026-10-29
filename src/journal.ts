@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { reduceEvents } from "./domain.ts";
+import type { ApprovalEvidenceVerifier } from "./domain.ts";
 import type { Event, Payload, State } from "./domain.ts";
 
 export function makeEvent(
@@ -25,6 +26,7 @@ export interface Journal {
 }
 
 export class MemoryJournal implements Journal {
+  constructor(private readonly verifyApproval?: ApprovalEvidenceVerifier) {}
   private events = new Map<string, Event[]>();
 
   read(ticket: string): Event[] {
@@ -39,7 +41,7 @@ export class MemoryJournal implements Journal {
   ): State {
     const e = makeEvent(ticket, type, actor, payload);
     const events = [...this.read(ticket), e];
-    const s = reduceEvents(ticket, events);
+    const s = reduceEvents(ticket, events, this.verifyApproval);
     this.events.set(ticket, events);
 
     return s;
@@ -49,7 +51,7 @@ export class MemoryJournal implements Journal {
 export class SQLiteJournal implements Journal {
   private db: DatabaseSync;
 
-  constructor(path: string) {
+  constructor(path: string, private readonly verifyApproval?: ApprovalEvidenceVerifier) {
     this.db = new DatabaseSync(path);
     this.db.exec(
       `CREATE TABLE IF NOT EXISTS events (
@@ -91,7 +93,7 @@ export class SQLiteJournal implements Journal {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const e = makeEvent(ticket, type, actor, payload);
-      const state = reduceEvents(ticket, [...this.read(ticket), e]);
+      const state = reduceEvents(ticket, [...this.read(ticket), e], this.verifyApproval);
       this.db
         .prepare(
           "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",
