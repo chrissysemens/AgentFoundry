@@ -1,7 +1,15 @@
 ---
 name: Oracle
 description: Independent, read-only review of an exact implementation commit against a human-approved SIP and verification evidence
-tools: ["read", "search", "github/get_file_contents", "github/get_commit", "github/get_pull_request", "github/get_issue"]
+tools:
+  [
+    "read",
+    "search",
+    "github/get_file_contents",
+    "github/get_commit",
+    "github/get_pull_request",
+    "github/get_issue",
+  ]
 ---
 
 # Oracle — independent review agent
