@@ -1,3 +1,5 @@
+import { validateSipApprovalReceipt } from "./sip-approval.ts";
+import type { SipApprovalReceipt, VerifiedHumanApproval, VerifiedSipContent } from "./sip-approval.ts";
 import { validateReviewContract } from "./contracts.ts";
 import { createHash } from "node:crypto";
 export const digest = (content: string) =>
@@ -54,6 +56,8 @@ export type State = {
   sip_sha256?: string;
   approved_revision?: string;
   approved_sha256?: string;
+  approved_git_sha?: string;
+  approval_receipt?: SipApprovalReceipt;
   implementation_id?: string;
   code_revision?: string;
   repair_count: number;
@@ -218,7 +222,10 @@ export class FakeOracle implements OraclePort {
     return next;
   }
 }
-export function reduceEvents(ticket_id: string, events: Event[]): State {
+export type ApprovalEvidenceVerifier = (receipt: SipApprovalReceipt) => { sip: VerifiedSipContent; human: VerifiedHumanApproval } | undefined;
+
+/** Fail closed: no SIP approval without independently resolved evidence. */
+export function reduceEvents(ticket_id: string, events: Event[], verifyApproval?: ApprovalEvidenceVerifier): State {
   const s: State = {
     ticket_id,
     status: "MISSING",
@@ -268,6 +275,8 @@ export function reduceEvents(ticket_id: string, events: Event[]): State {
         s.sip_sha256 = p.sha256;
         s.approved_revision = undefined;
         s.approved_sha256 = undefined;
+        s.approved_git_sha = undefined;
+        s.approval_receipt = undefined;
         s.implementation_id = undefined;
         s.code_revision = undefined;
         s.accepted_revision = undefined;
@@ -278,10 +287,19 @@ export function reduceEvents(ticket_id: string, events: Event[]): State {
       case "SIP_APPROVED":
         assert(s.status === "AWAITING_APPROVAL", "Not awaiting approval");
         assert(human, "Human approval required");
+        assert(p.receipt !== null && typeof p.receipt === "object" && !Array.isArray(p.receipt), "Approval receipt required");
+        const receipt = p.receipt as SipApprovalReceipt;
         assert(
-          p.revision === s.sip_revision && p.sha256 === s.sip_sha256,
+          receipt.sip_revision === s.sip_revision && receipt.sip_sha256 === s.sip_sha256 &&
+          p.revision === receipt.sip_revision && p.sha256 === receipt.sip_sha256,
           "Stale SIP approval",
         );
+        const verified = verifyApproval?.(receipt);
+        assert(verified, "Trusted human approval evidence unavailable");
+        validateSipApprovalReceipt(receipt, verified.sip, verified.human);
+        assert(e.timestamp >= receipt.approved_at, "Approval cannot precede its source event");
+        s.approved_git_sha = receipt.sip_git_sha;
+        s.approval_receipt = structuredClone(receipt);
         s.approved_revision = s.sip_revision;
         s.approved_sha256 = s.sip_sha256;
         s.status = "APPROVED";
