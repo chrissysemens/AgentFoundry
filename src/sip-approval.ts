@@ -73,7 +73,7 @@ export function validateSipApprovalReceipt(
     throw new Error("Approval does not match verified human event");
   }
   if (
-    !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$/.test(receipt.approved_at) ||
+    !/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:[.][0-9]+)?Z$/.test(receipt.approved_at) ||
     !Number.isFinite(Date.parse(receipt.approved_at)) ||
     new Date(receipt.approved_at).toISOString() !== new Date(Date.parse(receipt.approved_at)).toISOString()
   ) {
