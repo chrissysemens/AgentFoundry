@@ -1,3 +1,4 @@
+import { fixtureReceipt, fixtureVerifier } from "./approval-fixture.ts";
 import { describe, expect, it } from "vitest";
 
 import { digest, FakeOracle, reduceEvents } from "../src/domain.ts";
@@ -18,7 +19,7 @@ function setup(journal: Journal) {
   append("TICKET_CREATED", "human:owner", { title: "Oracle" });
   append("GRILL_STARTED");
   append("SIP_PROPOSED", "agent:planner", { revision: "2", sha256: sipHash });
-  append("SIP_APPROVED", "human:owner", { revision: "2", sha256: sipHash });
+  append("SIP_APPROVED", "human:owner", { revision: "2", sha256: sipHash, receipt: fixtureReceipt });
   append("IMPLEMENTATION_STARTED", "agent:dev", {
     revision: "2",
     sha256: sipHash,
@@ -80,8 +81,8 @@ function review(
 }
 
 const adapters = [
-  { name: "memory", create: () => new MemoryJournal() },
-  { name: "sqlite", create: () => new SQLiteJournal(":memory:") },
+  { name: "memory", create: () => new MemoryJournal(fixtureVerifier) },
+  { name: "sqlite", create: () => new SQLiteJournal(":memory:", fixtureVerifier) },
 ];
 
 for (const adapter of adapters) {
@@ -117,7 +118,7 @@ for (const adapter of adapters) {
         });
       }
       const events = journal.read(ticketId);
-      const state = reduceEvents(ticketId, events);
+      const state = reduceEvents(ticketId, events, fixtureVerifier);
       expect(events).toHaveLength(16);
       expect(state.status).toBe("ESCALATED");
       expect(state.repair_count).toBe(3);
@@ -134,7 +135,7 @@ for (const adapter of adapters) {
       append("ORACLE_REVIEWED", "oracle:independent", {
         review: review(sipHash, "code0", 0, "INCONCLUSIVE"),
       });
-      const state = reduceEvents(ticketId, journal.read(ticketId));
+      const state = reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier);
       expect(state.repair_count).toBe(0);
       expect(state.status).toBe("ESCALATED");
     });
@@ -197,7 +198,7 @@ for (const adapter of adapters) {
         }),
       ).toThrow();
       append("MERGE_AUTHORIZED", "human:owner", payload);
-      expect(reduceEvents(ticketId, journal.read(ticketId)).status).toBe(
+      expect(reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier).status).toBe(
         "MERGE_AUTHORIZED",
       );
     });
@@ -216,11 +217,11 @@ for (const adapter of adapters) {
         }),
       ).toThrow();
       expect(
-        reduceEvents(ticketId, journal.read(ticketId)).proposals.abc?.status,
+        reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier).proposals.abc?.status,
       ).toBe("PROPOSED");
       append("ADVISORY_APPROVED", "human:owner", { fingerprint: "abc" });
       expect(
-        reduceEvents(ticketId, journal.read(ticketId)).proposals.abc?.status,
+        reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier).proposals.abc?.status,
       ).toBe("APPROVED_FOR_BACKLOG");
     });
 
@@ -255,8 +256,8 @@ for (const adapter of adapters) {
       const journal = adapter.create();
       const { ticketId } = setup(journal);
       const events = journal.read(ticketId);
-      expect(reduceEvents(ticketId, structuredClone(events))).toEqual(
-        reduceEvents(ticketId, events),
+      expect(reduceEvents(ticketId, structuredClone(events), fixtureVerifier)).toEqual(
+        reduceEvents(ticketId, events, fixtureVerifier),
       );
     });
   });
