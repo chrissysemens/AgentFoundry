@@ -87,6 +87,29 @@ const adapters = [
 
 for (const adapter of adapters) {
   describe(adapter.name, () => {
+
+    it("fails closed when approval evidence is unavailable or forged", () => {
+      const journal = adapter.create();
+      journal.append("approval-test", "TICKET_CREATED", "human:owner", { title: "Approval test" });
+      journal.append("approval-test", "GRILL_STARTED", "agent:planner");
+      journal.append("approval-test", "SIP_PROPOSED", "agent:planner", {
+        revision: "2", sha256: digest("approved SIP"),
+      });
+      const base = { revision: "2", sha256: digest("approved SIP") };
+      expect(() => journal.append("approval-test", "SIP_APPROVED", "human:owner", base)).toThrow("receipt required");
+      expect(() => journal.append("approval-test", "SIP_APPROVED", "human:owner", {
+        ...base, receipt: { ...fixtureReceipt, source_event_id: "forged" },
+      })).toThrow("evidence unavailable");
+      expect(() => journal.append("approval-test", "SIP_APPROVED", "human:owner", {
+        ...base, receipt: { ...fixtureReceipt, sip_git_sha: "b".repeat(40) },
+      })).toThrow("Git SHA mismatch");
+      const state = journal.append("approval-test", "SIP_APPROVED", "human:owner", {
+        ...base, receipt: fixtureReceipt,
+      });
+      expect(state.approved_git_sha).toBe(fixtureReceipt.sip_git_sha);
+      expect(state.approval_receipt).toEqual(fixtureReceipt);
+    });
+
     it("requires approval and the exact SIP identity", () => {
       const journal = adapter.create();
       journal.append("x", "TICKET_CREATED", "human:owner", { title: "x" });
