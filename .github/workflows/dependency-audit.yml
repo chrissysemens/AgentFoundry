@@ -1,0 +1,25 @@
+name: Dependency security audit
+
+on:
+  push:
+    branches:
+      - integration/found-002-r3
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
+        continue-on-error: true
+      - name: Audit all dependencies
+        run: npm audit --audit-level=moderate
