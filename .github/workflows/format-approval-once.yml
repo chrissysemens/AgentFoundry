@@ -1,0 +1,33 @@
+name: Format approval evidence (one-shot)
+
+on:
+  push:
+    branches:
+      - integration/found-002-r3
+    paths:
+      - .github/workflows/format-approval-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Format only new approval evidence files
+        run: npx prettier --write src/github-approval-evidence.ts tests/github-approval-evidence.test.ts
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/github-approval-evidence.ts tests/github-approval-evidence.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "style: apply Prettier to GitHub approval evidence"
+            git push origin HEAD:integration/found-002-r3
+          fi
