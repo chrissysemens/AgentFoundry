@@ -2,7 +2,7 @@
 
 ## Authority and scope
 
-Independent Oracle REJECTED Repair Attempt 1. This candidate addresses the two medium-severity contract findings only. The approved SIP Rev 2 is unchanged; no merge is authorized.
+Independent Oracle REJECTED Repair Attempt 1. This candidate addresses the two medium-severity contract findings only. The then-proposed SIP Revision 2 was unchanged. **Correction (2026-10-30): Revision 2 was never approved**, so this was pre-approval candidate work, not an authorized repair under an approved SIP. No merge was authorized.
 
 ## Changes
 
