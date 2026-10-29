@@ -1,4 +1,7 @@
-import type { SipApprovalReceipt, VerifiedHumanApproval } from "./sip-approval.ts";
+import type {
+  SipApprovalReceipt,
+  VerifiedHumanApproval,
+} from "./sip-approval.ts";
 
 /** Identity and source metadata resolved by a trusted GitHub API client. */
 export type GitHubApprovalEvent = {
