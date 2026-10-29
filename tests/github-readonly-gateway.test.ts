@@ -20,15 +20,9 @@ const sip = {
 describe("read-only GitHub approval gateway", () => {
   it("reads the exact comment and derives the issue identity from GitHub", async () => {
     const get = vi.fn(async () => comment);
-    const gateway = createReadOnlyGitHubApprovalGateway(
-      get,
-      "docs/SIP.md",
-      "3",
-    );
+    const gateway = createReadOnlyGitHubApprovalGateway(get, "docs/SIP.md", "3");
     const result = await gateway.fetchComment("owner/repo", 456);
-    expect(get).toHaveBeenCalledWith(
-      "/repos/owner/repo/issues/comments/456",
-    );
+    expect(get).toHaveBeenCalledWith("/repos/owner/repo/issues/comments/456");
     expect(result.issue_number).toBe(7);
     expect(result.author_id).toBe(123);
   });
@@ -42,9 +36,9 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(
-      gateway.fetchComment("owner/repo", 456),
-    ).rejects.toThrow("Invalid GitHub approval comment response");
+    await expect(gateway.fetchComment("owner/repo", 456)).rejects.toThrow(
+      "Invalid GitHub approval comment response",
+    );
   });
 
   it("rejects mismatched comment IDs and malformed API records", async () => {
@@ -61,18 +55,14 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(
-      malformed.fetchComment("owner/repo", 456),
-    ).rejects.toThrow("Malformed GitHub API response");
+    await expect(malformed.fetchComment("owner/repo", 456)).rejects.toThrow(
+      "Malformed GitHub API response",
+    );
   });
 
   it("fetches SIP bytes at the exact commit, not the branch tip", async () => {
     const get = vi.fn(async () => sip);
-    const gateway = createReadOnlyGitHubApprovalGateway(
-      get,
-      "docs/SIP.md",
-      "3",
-    );
+    const gateway = createReadOnlyGitHubApprovalGateway(get, "docs/SIP.md", "3");
     const result = await gateway.fetchSipAtCommit("owner/repo", sha);
     expect(get).toHaveBeenCalledWith(
       `/repos/owner/repo/contents/docs/SIP.md?ref=${sha}`,
