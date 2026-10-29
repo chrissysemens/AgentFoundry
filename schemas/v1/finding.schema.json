@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-foundry.local/schemas/v1/finding.schema.json",
+  "title": "Oracle finding v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "category", "severity", "location", "evidence", "resolution"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "enum": ["sip", "standard", "check", "advisory"]
+    },
+    "severity": {
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resolution": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_ref": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "if": {
+    "properties": {
+      "category": {
+        "enum": ["sip", "standard", "check"]
+      }
+    },
+    "required": ["category"]
+  },
+  "then": {
+    "properties": {
+      "rule_ref": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": ["rule_ref"]
+  }
+}

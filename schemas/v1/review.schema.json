@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-foundry.local/schemas/v1/review.schema.json",
+  "title": "Oracle review v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "review_id",
+    "implementation_id",
+    "sip_revision",
+    "sip_sha256",
+    "code_revision",
+    "reviewer",
+    "scope",
+    "verdict",
+    "timestamp",
+    "findings",
+    "automated_check_refs",
+    "checks_passed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1"
+    },
+    "review_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "implementation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sip_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sip_sha256": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer": {
+      "type": "string",
+      "pattern": "^oracle:.+"
+    },
+    "scope": {
+      "enum": [
+        "INITIAL_FULL",
+        "INCREMENTAL",
+        "JUSTIFIED_FULL"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        "ACCEPT",
+        "REJECT",
+        "INCONCLUSIVE"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "finding.schema.json"
+      }
+    },
+    "checks_passed": {
+      "type": "boolean"
+    },
+    "escalation_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outstanding_findings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "affected_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "regression_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "automated_check_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "INCONCLUSIVE"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "escalation_reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "escalation_reason"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "INCREMENTAL"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "changed_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outstanding_findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affected_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "regression_checks": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "changed_files",
+          "outstanding_findings",
+          "affected_paths",
+          "regression_checks"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "JUSTIFIED_FULL"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "scope_reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "scope_reason"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "REJECT"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "type": "array",
+            "contains": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "enum": [
+                    "sip",
+                    "standard",
+                    "check"
+                  ]
+                }
+              },
+              "required": [
+                "category"
+              ]
+            },
+            "minContains": 1
+          }
+        },
+        "required": [
+          "findings"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "ACCEPT"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks_passed": {
+            "const": true
+          },
+          "findings": {
+            "type": "array",
+            "not": {
+              "contains": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "enum": [
+                      "sip",
+                      "standard",
+                      "check"
+                    ]
+                  }
+                },
+                "required": [
+                  "category"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "checks_passed",
+          "findings"
+        ]
+      }
+    }
+  ]
+}
