@@ -47,9 +47,9 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(
-      gateway.fetchComment("owner/repo", 456),
-    ).rejects.toThrow("Invalid GitHub approval comment response");
+    await expect(gateway.fetchComment("owner/repo", 456)).rejects.toThrow(
+      "Invalid GitHub approval comment response",
+    );
     const malformed = createReadOnlyGitHubApprovalGateway(
       async () => null,
       "docs/SIP.md",
@@ -80,17 +80,17 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(
-      gateway.fetchSipAtCommit("owner/repo", "main"),
-    ).rejects.toThrow("Full Git SHA required");
+    await expect(gateway.fetchSipAtCommit("owner/repo", "main")).rejects.toThrow(
+      "Full Git SHA required",
+    );
     const directory = createReadOnlyGitHubApprovalGateway(
       async () => ({ ...sip, type: "dir" }),
       "docs/SIP.md",
       "3",
     );
-    await expect(
-      directory.fetchSipAtCommit("owner/repo", sha),
-    ).rejects.toThrow("Invalid GitHub SIP contents response");
+    await expect(directory.fetchSipAtCommit("owner/repo", sha)).rejects.toThrow(
+      "Invalid GitHub SIP contents response",
+    );
     const invalidUtf8 = createReadOnlyGitHubApprovalGateway(
       async () => ({
         ...sip,
@@ -99,9 +99,9 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(
-      invalidUtf8.fetchSipAtCommit("owner/repo", sha),
-    ).rejects.toThrow("SIP must be valid UTF-8");
+    await expect(invalidUtf8.fetchSipAtCommit("owner/repo", sha)).rejects.toThrow(
+      "SIP must be valid UTF-8",
+    );
   });
 
   it("fails closed without an immutable attestation verifier", async () => {
