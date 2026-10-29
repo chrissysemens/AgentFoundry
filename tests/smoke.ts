@@ -141,7 +141,11 @@ function runSmokeTests(journal: Journal): void {
   });
 
   // 6. Replaying the event history must reproduce the same state.
-  const replayedState = reduceEvents(TICKET_ID, structuredClone(events), fixtureVerifier);
+  const replayedState = reduceEvents(
+    TICKET_ID,
+    structuredClone(events),
+    fixtureVerifier,
+  );
 
   assert.deepEqual(state, replayedState);
 

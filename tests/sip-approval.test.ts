@@ -21,7 +21,8 @@ const human: VerifiedHumanApproval = {
 const receipt: SipApprovalReceipt = {
   sip_revision: "3",
   sip_git_sha: sip.git_sha,
-  sip_sha256: "296990c2d458be7e5c3ab476d323ed68b95d60db4b1869b02f9d496d481ed0c2",
+  sip_sha256:
+    "296990c2d458be7e5c3ab476d323ed68b95d60db4b1869b02f9d496d481ed0c2",
   ...human,
 };
 
@@ -32,25 +33,45 @@ describe("SIP approval receipt", () => {
 
   it("rejects a changed SIP even when the revision is unchanged", () => {
     expect(() =>
-      validateSipApprovalReceipt(receipt, { ...sip, utf8_content: "changed" }, human),
+      validateSipApprovalReceipt(
+        receipt,
+        { ...sip, utf8_content: "changed" },
+        human,
+      ),
     ).toThrow("digest mismatch");
   });
 
   it("rejects a stale commit or a shortened digest", () => {
     expect(() =>
-      validateSipApprovalReceipt({ ...receipt, sip_git_sha: "b".repeat(40) }, sip, human),
+      validateSipApprovalReceipt(
+        { ...receipt, sip_git_sha: "b".repeat(40) },
+        sip,
+        human,
+      ),
     ).toThrow("Git SHA mismatch");
     expect(() =>
-      validateSipApprovalReceipt({ ...receipt, sip_sha256: "a".repeat(12) }, sip, human),
+      validateSipApprovalReceipt(
+        { ...receipt, sip_sha256: "a".repeat(12) },
+        sip,
+        human,
+      ),
     ).toThrow("64-character");
   });
 
   it("rejects forged actor/provenance claims", () => {
     expect(() =>
-      validateSipApprovalReceipt({ ...receipt, approver_id: "human:owner" }, sip, human),
+      validateSipApprovalReceipt(
+        { ...receipt, approver_id: "human:owner" },
+        sip,
+        human,
+      ),
     ).toThrow("verified human event");
     expect(() =>
-      validateSipApprovalReceipt({ ...receipt, source_event_id: "fabricated" }, sip, human),
+      validateSipApprovalReceipt(
+        { ...receipt, source_event_id: "fabricated" },
+        sip,
+        human,
+      ),
     ).toThrow("verified human event");
   });
 

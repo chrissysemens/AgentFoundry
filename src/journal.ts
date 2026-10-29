@@ -51,7 +51,10 @@ export class MemoryJournal implements Journal {
 export class SQLiteJournal implements Journal {
   private db: DatabaseSync;
 
-  constructor(path: string, private readonly verifyApproval?: ApprovalEvidenceVerifier) {
+  constructor(
+    path: string,
+    private readonly verifyApproval?: ApprovalEvidenceVerifier,
+  ) {
     this.db = new DatabaseSync(path);
     this.db.exec(
       `CREATE TABLE IF NOT EXISTS events (
@@ -93,7 +96,11 @@ export class SQLiteJournal implements Journal {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const e = makeEvent(ticket, type, actor, payload);
-      const state = reduceEvents(ticket, [...this.read(ticket), e], this.verifyApproval);
+      const state = reduceEvents(
+        ticket,
+        [...this.read(ticket), e],
+        this.verifyApproval,
+      );
       this.db
         .prepare(
           "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",

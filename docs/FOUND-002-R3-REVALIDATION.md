@@ -4,14 +4,14 @@
 
 ## Authoritative identities
 
-| Item | Identity |
-| --- | --- |
-| Approved SIP | FOUND-002 Revision 3, proposed file on PR #4 |
-| SIP commit | `f155b0ad6996d29e75c5c87b9d04c83dd9d5055b` |
-| SIP SHA-256 (UTF-8) | `5d89c6ea2da022ce088e9f1330606857b0ef5c7a1d0e74629795f9ccddc45d7e` |
-| Historical candidate | `679d6725e46a606804072e75540f78be27300d9e` |
-| Revalidation branch | `feat/found-002-r3-revalidation` |
-| Approval record | [Issue #1 approval](https://github.com/chrissysemens/AgentFoundry/issues/1#issuecomment-6510682889) |
+| Item                   | Identity                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| Approved SIP           | FOUND-002 Revision 3, proposed file on PR #4                                                           |
+| SIP commit             | `f155b0ad6996d29e75c5c87b9d04c83dd9d5055b`                                                             |
+| SIP SHA-256 (UTF-8)    | `5d89c6ea2da022ce088e9f1330606857b0ef5c7a1d0e74629795f9ccddc45d7e`                                     |
+| Historical candidate   | `679d6725e46a606804072e75540f78be27300d9e`                                                             |
+| Revalidation branch    | `feat/found-002-r3-revalidation`                                                                       |
+| Approval record        | [Issue #1 approval](https://github.com/chrissysemens/AgentFoundry/issues/1#issuecomment-6510682889)    |
 | Adoption authorization | [Issue #1 disposition](https://github.com/chrissysemens/AgentFoundry/issues/1#issuecomment-6510705728) |
 
 ## Historical evidence preserved

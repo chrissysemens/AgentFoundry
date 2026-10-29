@@ -19,5 +19,12 @@ export const fixtureReceipt: SipApprovalReceipt = {
 };
 export const fixtureVerifier: ApprovalEvidenceVerifier = (receipt) =>
   receipt.source_event_id === fixtureHuman.source_event_id
-    ? { sip: { revision: "2", git_sha: fixtureGitSha, utf8_content: fixtureContent }, human: fixtureHuman }
+    ? {
+        sip: {
+          revision: "2",
+          git_sha: fixtureGitSha,
+          utf8_content: fixtureContent,
+        },
+        human: fixtureHuman,
+      }
     : undefined;
