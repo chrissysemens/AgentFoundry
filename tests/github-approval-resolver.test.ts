@@ -55,11 +55,7 @@ const gateway: TrustedGitHubApprovalGateway = {
 
 describe("trusted GitHub SIP approval resolution", () => {
   it("accepts matching independently resolved evidence", async () => {
-    const result = await resolveGitHubSipApproval(
-      receipt,
-      policy,
-      gateway,
-    );
+    const result = await resolveGitHubSipApproval(receipt, policy, gateway);
     expect(result.human.approver_id).toBe("123");
     expect(result.sip.utf8_content).toBe(content);
   });
