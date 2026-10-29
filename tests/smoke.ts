@@ -1,3 +1,4 @@
+import { fixtureReceipt, fixtureVerifier } from "./approval-fixture.ts";
 import assert from "node:assert/strict";
 import { Journal, MemoryJournal, SQLiteJournal } from "../src/journal.ts";
 import { digest, reduceEvents, Review } from "../src/domain.ts";
@@ -53,7 +54,7 @@ function createReview(
 }
 
 function runSmokeTests(journal: Journal): void {
-  const sipHash = digest("sip");
+  const sipHash = digest("approved SIP");
 
   const append = (
     eventType: string,
@@ -89,6 +90,7 @@ function runSmokeTests(journal: Journal): void {
   append("SIP_APPROVED", "human:owner", {
     revision: SIP_REVISION,
     sha256: sipHash,
+    receipt: fixtureReceipt,
   });
 
   append("IMPLEMENTATION_STARTED", "agent:dev", {
@@ -124,7 +126,7 @@ function runSmokeTests(journal: Journal): void {
   }
 
   const events = journal.read(TICKET_ID);
-  const state = reduceEvents(TICKET_ID, events);
+  const state = reduceEvents(TICKET_ID, events, fixtureVerifier);
 
   assert.equal(state.repair_count, 3);
   assert.equal(state.status, "ESCALATED");
@@ -139,7 +141,7 @@ function runSmokeTests(journal: Journal): void {
   });
 
   // 6. Replaying the event history must reproduce the same state.
-  const replayedState = reduceEvents(TICKET_ID, structuredClone(events));
+  const replayedState = reduceEvents(TICKET_ID, structuredClone(events), fixtureVerifier);
 
   assert.deepEqual(state, replayedState);
 
@@ -149,11 +151,11 @@ function runSmokeTests(journal: Journal): void {
 const journalFactories = [
   {
     name: "Memory",
-    create: () => new MemoryJournal(),
+    create: () => new MemoryJournal(fixtureVerifier),
   },
   {
     name: "SQLite",
-    create: () => new SQLiteJournal(":memory:"),
+    create: () => new SQLiteJournal(":memory:", fixtureVerifier),
   },
 ];
 
