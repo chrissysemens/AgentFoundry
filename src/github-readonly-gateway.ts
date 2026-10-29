@@ -57,10 +57,8 @@ export function createReadOnlyGitHubApprovalGateway(
         throw new Error("Invalid GitHub comment ID");
       }
       const data = record(
-        await get(
-          `/repos/${owner}/${repo}/issues/comments/${commentId}`,
-        ),
-      ) as GitHubCommentResponse;
+        await get(`/repos/${owner}/${repo}/issues/comments/${commentId}`),
+      ) as unknown as GitHubCommentResponse;
       const user = record(data.user);
       const issuePrefix = `https://api.github.com/repos/${owner}/${repo}/issues/`;
       if (
@@ -96,16 +94,16 @@ export function createReadOnlyGitHubApprovalGateway(
         await get(
           `/repos/${owner}/${repo}/contents/${encodedPath}?ref=${gitSha}`,
         ),
-      ) as GitHubContentResponse;
+      ) as unknown as GitHubContentResponse;
       if (
         data.type !== "file" ||
         data.encoding !== "base64" ||
         typeof data.content !== "string" ||
-        !/^[A-Za-z0-9+/=\\s]+$/.test(data.content)
+        !/^[A-Za-z0-9+/=\s]+$/.test(data.content)
       ) {
         throw new Error("Invalid GitHub SIP contents response");
       }
-      const bytes = Buffer.from(data.content.replace(/\\s/g, ""), "base64");
+      const bytes = Buffer.from(data.content.replace(/\s/g, ""), "base64");
       const utf8 = bytes.toString("utf8");
       if (!bytes.equals(Buffer.from(utf8, "utf8"))) {
         throw new Error("SIP must be valid UTF-8");
