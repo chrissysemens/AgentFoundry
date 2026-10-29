@@ -284,7 +284,7 @@ export function reduceEvents(ticket_id: string, events: Event[], verifyApproval?
         s.pending_repair = false;
         s.status = "AWAITING_APPROVAL";
         break;
-      case "SIP_APPROVED":
+      case "SIP_APPROVED": {
         assert(s.status === "AWAITING_APPROVAL", "Not awaiting approval");
         assert(human, "Human approval required");
         assert(p.receipt !== null && typeof p.receipt === "object" && !Array.isArray(p.receipt), "Approval receipt required");
@@ -304,6 +304,7 @@ export function reduceEvents(ticket_id: string, events: Event[], verifyApproval?
         s.approved_sha256 = s.sip_sha256;
         s.status = "APPROVED";
         break;
+      }
       case "IMPLEMENTATION_STARTED":
         assert(s.status === "APPROVED", "SIP approval required");
         assert(
