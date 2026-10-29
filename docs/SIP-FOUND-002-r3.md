@@ -8,7 +8,7 @@
 
 ## 1. Objective
 
-Implement a TypeScript/Node.js version of the Foundry event-sourced workflow, using the Python v0.2/v0.3 implementations only as behavioral references, and extend it with an independent, evidence-based Oracle review contract, bounded repair workflow, escalation, and human-only merge authorization. Preserve provider, ticketing, and storage independence in the domain core.
+Implement Agent Foundry exclusively in TypeScript on Node.js 24. Earlier Python prototypes are archived historical references only: they are not a maintained implementation, dependency, runtime, build step, or test tool. Build and validate the TypeScript event-sourced workflow and extend it with an independent, evidence-based Oracle review contract, bounded repair workflow, escalation, and human-only merge authorization. Preserve provider, ticketing, and storage independence in the domain core.
 
 ## 2. Decisions carried forward from Revision 2
 
@@ -23,13 +23,13 @@ Implement a TypeScript/Node.js version of the Foundry event-sourced workflow, us
 
 ## 2A. Architecture decision — implementation language
 
-- **Foundry core and CLI:** TypeScript on Node.js, with strict TypeScript compiler settings.
+- **Foundry core, orchestration, integrations, and CLI:** TypeScript exclusively on Node.js 24, with strict TypeScript compiler settings. No parallel Python implementation.
 - **Tests:** Vitest; test commands and setup documented for a TypeScript developer.
 - **Local persistence:** SQLite behind a repository/journal interface; in-memory adapter for domain tests. The SQLite driver is an adapter-level choice, not a domain dependency.
 - **Contracts:** Versioned JSON Schema, provider-neutral and consumable from other languages.
 - **Downstream projects:** May use any language, framework, or toolchain. Foundry's orchestration core remains TypeScript/Node.js; project-specific toolchains do not become Foundry runtime dependencies.
 - **Future integrations:** Claude, Codex, GitHub, other tools via adapters; no live provider required in this ticket.
-- **Python reference:** The existing Python prototype is not the production baseline and will not be merged as the Foundry implementation. Port behavior and acceptance tests, not Python modules.
+- **Archived Python prototypes:** Historical reference material only. No Python runtime, Python package, Python test framework, Python implementation, or Python tooling is required to develop, test, build, deploy, or operate Agent Foundry. The TypeScript source is the sole maintained implementation; any useful historical behavior must be expressed as TypeScript acceptance tests.
 
 ## 3. Scope
 
@@ -75,10 +75,10 @@ After explicit approval of this Revision 3, first conduct a **fresh baseline ass
 
 ## 5. Proposed implementation sequence
 
-1. **Approval and candidate disposition:** record explicit Revision 3 approval identity; assess the pre-approval candidate and obtain a human decision on documented adoption/revalidation versus fresh implementation. Then perform baseline and correction: inspect the Python reference behavior and tests; scaffold the TypeScript project and port the foundational state machine. The current `IMPLEMENTATION_STARTED` increments `attempts` and caps at 3, which effectively allows only two repairs. Replace with distinct initial implementation and repair-submission semantics, preserving replay compatibility or documenting an explicit event migration.
+1. **Approval and candidate disposition:** record explicit Revision 3 approval identity; assess the pre-approval candidate and obtain a human decision on documented adoption/revalidation versus fresh implementation. Then establish and correct the TypeScript baseline using TypeScript tests and contracts. Archived Python examples may inform expected behavior but are not a source dependency. The current `IMPLEMENTATION_STARTED` increments `attempts` and caps at 3, which effectively allows only two repairs. Replace with distinct initial implementation and repair-submission semantics, preserving replay compatibility or documenting an explicit event migration.
 2. **Contracts:** add versioned Oracle review and finding JSON Schemas, TypeScript types and runtime validation, and sample valid/invalid reviews.
 3. **Domain workflow:** add events and transitions for review outcomes, repair requests/submissions, escalations, advisory proposals, and merge authorization; protect against stale review/code identities and counter resets.
-4. **Oracle port:** define a narrow interface accepting an approved SIP, current diff/code identity, test results, mandatory standards, and previous findings. Add fake implementation for deterministic testing; keep developer private reasoning out of the request contract.
+4. **Oracle interface:** define a narrow interface accepting an approved SIP, current diff/code identity, test results, mandatory standards, and previous findings. Add fake implementation for deterministic testing; keep developer private reasoning out of the request contract.
 5. **Persistence and CLI:** implement a TypeScript SQLite append-only adapter without embedding SQL in core. Demonstrate create/review/reject/repair/accept/merge-approval and escalation paths.
 6. **Docs and validation:** update workflow diagrams, examples, agent instructions, and tests; present evidence in PR.
 
@@ -124,9 +124,9 @@ After explicit approval of this Revision 3, first conduct a **fresh baseline ass
 ## 9. Revision history and change control
 
 - **Revision 1:** Eight governance decisions approved; Python prototype implemented but not merged.
-- **Revision 2:** Changes implementation language to TypeScript/Node.js and testing to Vitest; makes a full TypeScript port of the core and storage adapters part of scope. All eight governance decisions, authority gates, and three-repair ceiling remain unchanged.
+- **Revision 2:** Changes implementation language to TypeScript/Node.js and testing to Vitest; makes the TypeScript core and storage adapters part of scope. All eight governance decisions, authority gates, and three-repair ceiling remain unchanged.
 - Revision 1 approval did **not** authorize the Revision 2 TypeScript implementation. The human owner confirmed Revision 2 was not approved; the existing code is a pre-approval candidate.
-- **Revision 3 (proposed):** specifies prospective handling of that candidate, exact approval evidence, reviewer independence, SHA-linked CI evidence, dependency-security policy, and project-agnostic downstream language support. Revision 3 requires its own explicit approval.
+- **Revision 3 (proposed):** specifies prospective handling of that candidate, exact approval evidence, reviewer independence, SHA-linked CI evidence, dependency-security policy, and project-agnostic downstream language support. Clarifies that Agent Foundry itself is TypeScript-only on Node.js 24 and Python is archived historical reference material, not a maintained or required runtime. Revision 3 requires its own explicit approval.
 
 ## 10. Delivery and sign-off
 
