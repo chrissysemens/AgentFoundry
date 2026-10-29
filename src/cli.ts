@@ -1,3 +1,4 @@
+import type { ApprovalEvidenceVerifier } from "./domain.ts";
 import { SQLiteJournal } from "./journal.ts";
 import { digest } from "./domain.ts";
 import type { Review } from "./domain.ts";
@@ -16,7 +17,13 @@ if (args[0] !== "demo") {
   process.exit(1);
 }
 
-const journal = new SQLiteJournal(args[1] ?? ":memory:");
+// Demonstration-only simulated approval source. NOT authenticated production evidence.
+const demoHuman = { approver_id: "demo-human", source: "demo-fixture", source_event_id: "demo-event", approved_at: "2020-01-01T00:00:00.000Z" };
+const demoGitSha = "a".repeat(40);
+const verifyDemoApproval: ApprovalEvidenceVerifier = (receipt) => receipt.source_event_id === demoHuman.source_event_id
+  ? { sip: { revision: "1", git_sha: demoGitSha, utf8_content: "SIP demo revision 1" }, human: demoHuman }
+  : undefined;
+const journal = new SQLiteJournal(args[1] ?? ":memory:", verifyDemoApproval);
 const id = "FOUND-DEMO";
 
 const append = (
@@ -35,7 +42,7 @@ const sha = digest("SIP demo revision 1");
 append("TICKET_CREATED", "human:owner", { title: "Demo" });
 append("GRILL_STARTED", "human:owner");
 append("SIP_PROPOSED", "agent:planner", { revision: "1", sha256: sha });
-append("SIP_APPROVED", "human:owner", { revision: "1", sha256: sha });
+append("SIP_APPROVED", "human:owner", { revision: "1", sha256: sha, receipt: { sip_revision: "1", sip_sha256: sha, sip_git_sha: demoGitSha, ...demoHuman } });
 append("IMPLEMENTATION_STARTED", "agent:developer", {
   revision: "1",
   sha256: sha,
