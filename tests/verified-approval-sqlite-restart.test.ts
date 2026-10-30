@@ -31,6 +31,7 @@ describe("verified SQLite journal restart", () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-verified-"));
     const path = join(directory, "journal.sqlite");
     const holder: { journal?: SQLiteJournal } = {};
+    const readCount = () => holder.journal?.read("ticket").length ?? 0;
     try {
       const first = new VerifiedApprovalWriter(
         (verify) => {
@@ -60,13 +61,13 @@ describe("verified SQLite journal restart", () => {
         "agent:planner",
       );
       expect(state.title).toBe("Persisted ticket");
-      expect(holder.journal?.read("ticket")).toHaveLength(2);
+      expect(readCount()).toBe(2);
       await expect(
         reopened.append("ticket", "SIP_APPROVED", "human:owner", {
           receipt: { ...fixtureReceipt, source_event_id: "456" },
         }),
       ).rejects.toThrow("Independent evidence unavailable");
-      expect(holder.journal?.read("ticket")).toHaveLength(2);
+      expect(readCount()).toBe(2);
     } finally {
       holder.journal?.close();
       rmSync(directory, { recursive: true, force: true });
