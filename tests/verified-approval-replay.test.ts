@@ -36,7 +36,11 @@ function event(receipt: unknown): Event {
 
 describe("verified approval replay", () => {
   it("does not authorize a receipt absent from preverified history", async () => {
-    const verify = await prepareVerifiedApprovalVerifier([], policy, unavailable);
+    const verify = await prepareVerifiedApprovalVerifier(
+      [],
+      policy,
+      unavailable,
+    );
     expect(verify(fixtureReceipt)).toBeUndefined();
   });
 
