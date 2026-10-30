@@ -1,8 +1,17 @@
-import { fixtureReceipt, fixtureVerifier } from "./approval-fixture.ts";
+import {
+  fixtureGitSha,
+  fixtureHuman,
+  fixtureReceipt,
+  fixtureVerifier,
+} from "./approval-fixture.ts";
 import { describe, expect, it } from "vitest";
 
 import { digest, FakeOracle, reduceEvents } from "../src/domain.ts";
-import type { OracleRequest, Review } from "../src/domain.ts";
+import type {
+  ApprovalEvidenceVerifier,
+  OracleRequest,
+  Review,
+} from "../src/domain.ts";
 import { MemoryJournal, SQLiteJournal } from "../src/journal.ts";
 import type { Journal } from "../src/journal.ts";
 
