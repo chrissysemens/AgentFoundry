@@ -73,7 +73,12 @@ describe("verified GitHub approval gateway", () => {
       githubGet,
       "docs/SIP.md",
       "3",
-      { get: async () => ({ ...signed, payload: { ...payload, author_id: 999 } }) },
+      {
+        get: async () => ({
+          ...signed,
+          payload: { ...payload, author_id: 999 },
+        }),
+      },
       trust,
     );
     await expect(gateway.verifyAttestation("owner/repo", 456)).rejects.toThrow(
