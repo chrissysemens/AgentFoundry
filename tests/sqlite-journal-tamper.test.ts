@@ -1,5 +1,5 @@
-import { DatabaseSync } from "node:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -18,10 +18,9 @@ describe("SQLite journal tamper resistance", () => {
       });
       external = new DatabaseSync(path);
       expect(() =>
-        external?.prepare("UPDATE events SET event_json=? WHERE ticket_id=?").run(
-          '{"forged":true}',
-          "ticket",
-        ),
+        external
+          ?.prepare("UPDATE events SET event_json=? WHERE ticket_id=?")
+          .run('{"forged":true}', "ticket"),
       ).toThrow("append only");
       expect(() =>
         external?.prepare("DELETE FROM events WHERE ticket_id=?").run("ticket"),
