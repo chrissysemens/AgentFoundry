@@ -66,6 +66,7 @@ describe("SQLite journal tamper resistance", () => {
           allowed_human_ids: [123],
         },
         gateway,
+        "ticket",
       );
       await writer.append("ticket", "TICKET_CREATED", "human:owner", {
         title: "Direct insert",
