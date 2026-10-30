@@ -40,12 +40,7 @@ const store = (entry: unknown) => ({
 describe("signed immutable approval attestation verification", () => {
   it("accepts an authentic signature from a configured key", async () => {
     await expect(
-      verifySignedApprovalAttestation(
-        store(signed),
-        trust,
-        "owner/repo",
-        456,
-      ),
+      verifySignedApprovalAttestation(store(signed), trust, "owner/repo", 456),
     ).resolves.toEqual(payload);
   });
 
@@ -76,12 +71,7 @@ describe("signed immutable approval attestation verification", () => {
 
   it("rejects cross-repository replay", async () => {
     await expect(
-      verifySignedApprovalAttestation(
-        store(signed),
-        trust,
-        "other/repo",
-        456,
-      ),
+      verifySignedApprovalAttestation(store(signed), trust, "other/repo", 456),
     ).rejects.toThrow("Signed approval identity mismatch");
   });
 
