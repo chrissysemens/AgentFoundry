@@ -331,3 +331,45 @@ it("does not expose developer private reasoning through the Oracle request", asy
     "ACCEPT",
   );
 });
+
+it("compares approval timestamps chronologically across fractional precision", () => {
+  const journal = new MemoryJournal(fixtureVerifier);
+  const ticketId = "precision-test";
+  journal.append(ticketId, "TICKET_CREATED", "human:owner", {
+    title: "Timestamp precision",
+  });
+  journal.append(ticketId, "GRILL_STARTED", "agent:planner");
+  journal.append(ticketId, "SIP_PROPOSED", "agent:planner", {
+    revision: "2",
+    sha256: digest("approved SIP"),
+  });
+  journal.append(ticketId, "SIP_APPROVED", "human:owner", {
+    revision: "2",
+    sha256: digest("approved SIP"),
+    receipt: fixtureReceipt,
+  });
+  const events = journal.read(ticketId);
+  const approval = events.find((event) => event.type === "SIP_APPROVED");
+  if (!approval) throw new Error("Approval event missing");
+  approval.timestamp = "2020-01-01T00:00:00.500Z";
+  approval.payload.receipt = {
+    ...fixtureReceipt,
+    approved_at: "2020-01-01T00:00:00Z",
+  };
+  const verifier: ApprovalEvidenceVerifier = () => ({
+    sip: {
+      revision: "2",
+      git_sha: fixtureGitSha,
+      utf8_content: "approved SIP",
+    },
+    human: {
+      ...fixtureHuman,
+      approved_at: "2020-01-01T00:00:00Z",
+    },
+  });
+  expect(reduceEvents(ticketId, events, verifier).status).toBe("APPROVED");
+  approval.timestamp = "2019-12-31T23:59:59.999Z";
+  expect(() => reduceEvents(ticketId, events, verifier)).toThrow(
+    "Approval cannot precede its source event",
+  );
+});
