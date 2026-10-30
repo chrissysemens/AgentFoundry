@@ -358,7 +358,7 @@ it("compares approval timestamps chronologically across fractional precision", (
     receipt: fixtureReceipt,
   });
   const events = journal.read(ticketId);
-  const approval = events.find((event) => event.type === "SIP_APPROVED");
+  const approval = events.find((event) => event.event_type === "SIP_APPROVED");
   if (!approval) throw new Error("Approval event missing");
   approval.timestamp = "2020-01-01T00:00:00.500Z";
   approval.payload.receipt = {
