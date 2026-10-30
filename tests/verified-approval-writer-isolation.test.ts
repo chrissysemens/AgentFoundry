@@ -33,6 +33,7 @@ describe("verified approval writer isolation", () => {
       (verify) => new MemoryJournal(verify),
       policy,
       gateway,
+      "ticket",
     );
     const first = writer.append("ticket", "SIP_APPROVED", "human:owner", {
       receipt: { ...fixtureReceipt, source_event_id: "123" },
@@ -73,22 +74,25 @@ describe("verified approval writer isolation", () => {
       },
       policy,
       gateway,
+      "ticket",
     );
-    await writer.append("alpha", "TICKET_CREATED", "human:owner", {
+    await writer.append("ticket", "TICKET_CREATED", "human:owner", {
       title: "Alpha",
     });
-    await writer.append("beta", "TICKET_CREATED", "human:owner", {
-      title: "Beta",
-    });
     await expect(
-      writer.append("alpha", "SIP_APPROVED", "human:owner", {
+      writer.append("beta", "TICKET_CREATED", "human:owner", {
+        title: "Beta",
+      }),
+    ).rejects.toThrow("Ticket does not match trusted approval binding");
+    await expect(
+      writer.append("ticket", "SIP_APPROVED", "human:owner", {
         receipt: { ...fixtureReceipt, source_event_id: "123" },
       }),
     ).rejects.toThrow("Evidence unavailable");
-    const state = await writer.append("beta", "GRILL_STARTED", "agent:planner");
-    expect(state.title).toBe("Beta");
-    expect(journal?.read("alpha")).toHaveLength(1);
-    expect(journal?.read("beta")).toHaveLength(2);
+    const state = await writer.append("ticket", "GRILL_STARTED", "agent:planner");
+    expect(state.title).toBe("Alpha");
+    expect(journal?.read("ticket")).toHaveLength(2);
+    expect(journal?.read("beta")).toHaveLength(0);
   });
 
   it("rejects a forged historical approval inserted outside the verified writer", async () => {
@@ -111,6 +115,7 @@ describe("verified approval writer isolation", () => {
       },
       policy,
       gateway,
+      "ticket",
     );
     await writer.append("ticket", "TICKET_CREATED", "human:owner", {
       title: "Bypass attempt",
