@@ -30,12 +30,12 @@ describe("verified SQLite journal restart", () => {
   it("preserves ordinary events and refuses unauthenticated approvals after reopening", async () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-verified-"));
     const path = join(directory, "journal.sqlite");
-    let journal: SQLiteJournal | undefined;
+    const holder: { journal?: SQLiteJournal } = {};
     try {
       const first = new VerifiedApprovalWriter(
         (verify) => {
-          journal = new SQLiteJournal(path, verify);
-          return journal;
+          holder.journal = new SQLiteJournal(path, verify);
+          return holder.journal;
         },
         policy,
         unavailable,
@@ -43,13 +43,13 @@ describe("verified SQLite journal restart", () => {
       await first.append("ticket", "TICKET_CREATED", "human:owner", {
         title: "Persisted ticket",
       });
-      journal?.close();
-      journal = undefined;
+      holder.journal?.close();
+      holder.journal = undefined;
 
       const reopened = new VerifiedApprovalWriter(
         (verify) => {
-          journal = new SQLiteJournal(path, verify);
-          return journal;
+          holder.journal = new SQLiteJournal(path, verify);
+          return holder.journal;
         },
         policy,
         unavailable,
@@ -60,15 +60,15 @@ describe("verified SQLite journal restart", () => {
         "agent:planner",
       );
       expect(state.title).toBe("Persisted ticket");
-      expect(journal?.read("ticket")).toHaveLength(2);
+      expect(holder.journal?.read("ticket")).toHaveLength(2);
       await expect(
         reopened.append("ticket", "SIP_APPROVED", "human:owner", {
           receipt: { ...fixtureReceipt, source_event_id: "456" },
         }),
       ).rejects.toThrow("Independent evidence unavailable");
-      expect(journal?.read("ticket")).toHaveLength(2);
+      expect(holder.journal?.read("ticket")).toHaveLength(2);
     } finally {
-      journal?.close();
+      holder.journal?.close();
       rmSync(directory, { recursive: true, force: true });
     }
   });
