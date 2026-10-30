@@ -86,6 +86,7 @@ function buildWriter(tamper = false) {
     },
     policy,
     gateway,
+    "ticket",
   );
   return { writer, read: () => journal?.read("ticket") ?? [] };
 }
@@ -173,6 +174,7 @@ describe("signed approval to journal integration", () => {
       },
       policy,
       gateway,
+      "ticket",
     );
     await writer.append("ticket", "TICKET_CREATED", "human:owner", {
       title: "Revocation test",
@@ -243,6 +245,7 @@ describe("signed approval to journal integration", () => {
         },
         policy,
         gateway,
+        "ticket",
       );
     const count = () => holder.journal?.read("ticket").length ?? 0;
     try {
