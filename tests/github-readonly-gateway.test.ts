@@ -20,7 +20,11 @@ const sip = {
 describe("read-only GitHub approval gateway", () => {
   it("reads the exact comment and derives the issue identity from GitHub", async () => {
     const get = vi.fn(async () => comment);
-    const gateway = createReadOnlyGitHubApprovalGateway(get, "docs/SIP.md", "3");
+    const gateway = createReadOnlyGitHubApprovalGateway(
+      get,
+      "docs/SIP.md",
+      "3",
+    );
     const result = await gateway.fetchComment("owner/repo", 456);
     expect(get).toHaveBeenCalledWith("/repos/owner/repo/issues/comments/456");
     expect(result.issue_number).toBe(7);
@@ -62,7 +66,11 @@ describe("read-only GitHub approval gateway", () => {
 
   it("fetches SIP bytes at the exact commit, not the branch tip", async () => {
     const get = vi.fn(async () => sip);
-    const gateway = createReadOnlyGitHubApprovalGateway(get, "docs/SIP.md", "3");
+    const gateway = createReadOnlyGitHubApprovalGateway(
+      get,
+      "docs/SIP.md",
+      "3",
+    );
     const result = await gateway.fetchSipAtCommit("owner/repo", sha);
     expect(get).toHaveBeenCalledWith(
       `/repos/owner/repo/contents/docs/SIP.md?ref=${sha}`,
@@ -80,9 +88,9 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(gateway.fetchSipAtCommit("owner/repo", "main")).rejects.toThrow(
-      "Full Git SHA required",
-    );
+    await expect(
+      gateway.fetchSipAtCommit("owner/repo", "main"),
+    ).rejects.toThrow("Full Git SHA required");
     const directory = createReadOnlyGitHubApprovalGateway(
       async () => ({ ...sip, type: "dir" }),
       "docs/SIP.md",
@@ -99,9 +107,9 @@ describe("read-only GitHub approval gateway", () => {
       "docs/SIP.md",
       "3",
     );
-    await expect(invalidUtf8.fetchSipAtCommit("owner/repo", sha)).rejects.toThrow(
-      "SIP must be valid UTF-8",
-    );
+    await expect(
+      invalidUtf8.fetchSipAtCommit("owner/repo", sha),
+    ).rejects.toThrow("SIP must be valid UTF-8");
   });
 
   it("fails closed without an immutable attestation verifier", async () => {
@@ -117,11 +125,7 @@ describe("read-only GitHub approval gateway", () => {
 
   it("rejects unsafe configured SIP paths", () => {
     expect(() =>
-      createReadOnlyGitHubApprovalGateway(
-        async () => sip,
-        "../secret",
-        "3",
-      ),
+      createReadOnlyGitHubApprovalGateway(async () => sip, "../secret", "3"),
     ).toThrow("Unsafe configured SIP path");
   });
 });
