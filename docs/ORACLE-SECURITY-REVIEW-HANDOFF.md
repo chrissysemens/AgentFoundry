@@ -1,8 +1,10 @@
 # Independent Oracle security review handoff
 
-**Scope:** PR #6, `integration/found-002-r3`, compared with `main`.
-**Review target:** resolve and record the *exact full commit SHA at review time*. Do not reuse an earlier verdict after new commits.
-**Authority:** independent, read-only review. Oracle must not change implementation or merge.
+**Scope:** PR #6, `integration/found-002-r3`, compared with `main`.  
+**Review target:** resolve and record the _exact full commit SHA at review time_. Do
+not reuse an earlier verdict after new commits.  
+**Authority:** independent, read-only review. Oracle must not change
+implementation or merge.
 
 ## Required checks
 
@@ -27,8 +29,15 @@
 
 ## Required verdict record
 
-Record reviewed full commit SHA, SIP revision and digest, evidence and CI run URLs, finding severity and exact paths/lines, remaining deployment blockers, and one of ACCEPT / REJECT / INCONCLUSIVE under the Oracle protocol. Do not substitute green CI for independent security review.
+Record reviewed full commit SHA, SIP revision and digest, evidence and CI run
+URLs, finding severity and exact paths/lines, remaining deployment blockers,
+and one of ACCEPT / REJECT / INCONCLUSIVE under the Oracle protocol. Do not
+substitute green CI for independent security review.
 
-**Current known blockers:** no deployed operator-controlled immutable approval retention; no deployed signer/key custody; no authenticated production GitHub transport; verified writer not wired into an isolated production runtime; no independently authenticated merge authorization; no end-to-end Mycelium pilot.
+**Current known blockers:** no deployed operator-controlled immutable approval
+retention; no deployed signer/key custody; no authenticated production GitHub
+transport; verified writer not wired into an isolated production runtime; no
+independently authenticated merge authorization; no end-to-end Mycelium pilot.
 
-**Historical note:** FOUND-002 Repair Attempt 2 remains INCONCLUSIVE. Rev 3 approval is prospective and is not merge authorization.
+**Historical note:** FOUND-002 Repair Attempt 2 remains INCONCLUSIVE. Rev 3
+approval is prospective and is not merge authorization.
