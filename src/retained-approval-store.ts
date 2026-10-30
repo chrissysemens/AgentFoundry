@@ -10,7 +10,14 @@ export interface RetainedApprovalObjectReader {
 }
 
 function evidenceKey(repository: string, commentId: number): string {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
+  const parts = repository.split("/");
+  if (
+    parts.length !== 2 ||
+    parts.some(
+      (part) =>
+        !/^[A-Za-z0-9_.-]+$/.test(part) || part === "." || part === "..",
+    )
+  ) {
     throw new Error("Invalid attestation repository");
   }
   if (!Number.isSafeInteger(commentId) || commentId <= 0) {
