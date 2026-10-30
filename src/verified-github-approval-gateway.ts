@@ -1,9 +1,7 @@
 import type { AuthenticatedGitHubGet } from "./github-readonly-gateway.ts";
 import { createReadOnlyGitHubApprovalGateway } from "./github-readonly-gateway.ts";
 import type { TrustedGitHubApprovalGateway } from "./github-approval-resolver.ts";
-import {
-  verifySignedApprovalAttestation,
-} from "./signed-approval-attestation.ts";
+import { verifySignedApprovalAttestation } from "./signed-approval-attestation.ts";
 import type {
   AttestationTrustPolicy,
   ImmutableApprovalAttestationStore,
