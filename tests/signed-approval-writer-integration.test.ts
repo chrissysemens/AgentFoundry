@@ -126,6 +126,7 @@ describe("signed approval to journal integration", () => {
     ).rejects.toThrow("Invalid approval attestation signature");
     expect(read()).toHaveLength(3);
   });
+
   it("requires fresh evidence before subsequent writes", async () => {
     let available = true;
     const signed = {
@@ -193,5 +194,4 @@ describe("signed approval to journal integration", () => {
     ).rejects.toThrow("Immutable approval attestation required");
     expect(journal?.read("ticket")).toHaveLength(4);
   });
-
 });
