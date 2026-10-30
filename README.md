@@ -18,15 +18,15 @@ Imagine hiring a tiny software company:
 
 A few words you will see:
 
-| Word | Plain-English meaning |
-| --- | --- |
-| **Issue** | A task or request, usually on GitHub. |
-| **SIP** | The written plan for one task: what we will change and how we will know it works. |
-| **PR (pull request)** | A proposed code change you can inspect before it becomes part of the main project. |
-| **CI** | Automatic checks that run when code is pushed, such as formatting, tests and security checks. |
-| **Oracle** | The independent reviewer that checks the code against the approved plan. |
-| **Merge** | Accepting the PR into the main codebase. This requires a **separate, explicit human authorization**. |
-| **Journal** | The history of what happened, so decisions can be checked later. |
+| Word                  | Plain-English meaning                                                                                |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Issue**             | A task or request, usually on GitHub.                                                                |
+| **SIP**               | The written plan for one task: what we will change and how we will know it works.                    |
+| **PR (pull request)** | A proposed code change you can inspect before it becomes part of the main project.                   |
+| **CI**                | Automatic checks that run when code is pushed, such as formatting, tests and security checks.        |
+| **Oracle**            | The independent reviewer that checks the code against the approved plan.                             |
+| **Merge**             | Accepting the PR into the main codebase. This requires a **separate, explicit human authorization**. |
+| **Journal**           | The history of what happened, so decisions can be checked later.                                     |
 
 ## How using it is supposed to work
 

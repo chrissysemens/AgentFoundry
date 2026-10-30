@@ -45,9 +45,14 @@ describe("verified approval writer isolation", () => {
     ).rejects.toThrow("Concurrent verified writes forbidden");
     release?.();
     await expect(first).rejects.toThrow("Evidence unavailable");
-    const state = await writer.append("ticket", "TICKET_CREATED", "human:owner", {
-      title: "Recovered",
-    });
+    const state = await writer.append(
+      "ticket",
+      "TICKET_CREATED",
+      "human:owner",
+      {
+        title: "Recovered",
+      },
+    );
     expect(state.title).toBe("Recovered");
   });
 
@@ -86,7 +91,11 @@ describe("verified approval writer isolation", () => {
         receipt: { ...fixtureReceipt, source_event_id: "123" },
       }),
     ).rejects.toThrow("Evidence unavailable");
-    const state = await writer.append("ticket", "GRILL_STARTED", "agent:planner");
+    const state = await writer.append(
+      "ticket",
+      "GRILL_STARTED",
+      "agent:planner",
+    );
     expect(state.title).toBe("Alpha");
     expect(journal?.read("ticket")).toHaveLength(2);
     expect(journal?.read("beta")).toHaveLength(0);
