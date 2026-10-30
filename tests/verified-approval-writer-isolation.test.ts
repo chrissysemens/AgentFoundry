@@ -52,6 +52,7 @@ describe("verified approval writer isolation", () => {
     );
     expect(state.title).toBe("Recovered");
   });
+
   it("keeps unrelated ticket histories isolated", async () => {
     const gateway: TrustedGitHubApprovalGateway = {
       async fetchComment() {
@@ -84,14 +85,9 @@ describe("verified approval writer isolation", () => {
         receipt: { ...fixtureReceipt, source_event_id: "123" },
       }),
     ).rejects.toThrow("Evidence unavailable");
-    const state = await writer.append(
-      "beta",
-      "GRILL_STARTED",
-      "agent:planner",
-    );
+    const state = await writer.append("beta", "GRILL_STARTED", "agent:planner");
     expect(state.title).toBe("Beta");
     expect(journal?.read("alpha")).toHaveLength(1);
     expect(journal?.read("beta")).toHaveLength(2);
   });
-
 });
