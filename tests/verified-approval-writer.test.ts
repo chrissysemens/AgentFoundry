@@ -33,6 +33,7 @@ describe("verified approval writer", () => {
       },
       policy,
       gateway,
+      "ticket",
     );
     await writer.append("ticket", "TICKET_CREATED", "human:owner", {
       title: "Test",
@@ -57,6 +58,7 @@ describe("verified approval writer", () => {
       (verify) => new MemoryJournal(verify),
       policy,
       gateway,
+      "ticket",
     );
     await expect(
       writer.append("ticket", "SIP_APPROVED", "human:owner"),
