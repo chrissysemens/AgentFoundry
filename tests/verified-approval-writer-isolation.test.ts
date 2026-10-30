@@ -52,4 +52,46 @@ describe("verified approval writer isolation", () => {
     );
     expect(state.title).toBe("Recovered");
   });
+  it("keeps unrelated ticket histories isolated", async () => {
+    const gateway: TrustedGitHubApprovalGateway = {
+      async fetchComment() {
+        throw new Error("Evidence unavailable");
+      },
+      async fetchSipAtCommit() {
+        throw new Error("SIP unavailable");
+      },
+      async verifyAttestation() {
+        return undefined;
+      },
+    };
+    let journal: MemoryJournal | undefined;
+    const writer = new VerifiedApprovalWriter(
+      (verify) => {
+        journal = new MemoryJournal(verify);
+        return journal;
+      },
+      policy,
+      gateway,
+    );
+    await writer.append("alpha", "TICKET_CREATED", "human:owner", {
+      title: "Alpha",
+    });
+    await writer.append("beta", "TICKET_CREATED", "human:owner", {
+      title: "Beta",
+    });
+    await expect(
+      writer.append("alpha", "SIP_APPROVED", "human:owner", {
+        receipt: { ...fixtureReceipt, source_event_id: "123" },
+      }),
+    ).rejects.toThrow("Evidence unavailable");
+    const state = await writer.append(
+      "beta",
+      "GRILL_STARTED",
+      "agent:planner",
+    );
+    expect(state.title).toBe("Beta");
+    expect(journal?.read("alpha")).toHaveLength(1);
+    expect(journal?.read("beta")).toHaveLength(2);
+  });
+
 });
