@@ -91,6 +91,8 @@ describe("verified GitHub approval gateway", () => {
       { get: async () => undefined },
       trust,
     );
-    await expect(gateway.verifyAttestation("owner/repo", 456)).resolves.toBeUndefined();
+    await expect(
+      gateway.verifyAttestation("owner/repo", 456),
+    ).resolves.toBeUndefined();
   });
 });
