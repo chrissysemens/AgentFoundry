@@ -40,42 +40,42 @@ export class VerifiedApprovalWriter {
     if (this.busy) throw new Error("Concurrent verified writes forbidden");
     this.busy = true;
     try {
-    // Authenticate all historical approvals before any synchronous replay.
-    // Recheck each time: do not carry forward stale cached authorization.
-    const next = new Map<
-      string,
-      Awaited<ReturnType<typeof resolveGitHubSipApproval>>
-    >();
-    for (const event of this.journal.read(ticket)) {
-      if (event.event_type !== "SIP_APPROVED") continue;
-      const receipt = event.payload.receipt;
-      if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) {
-        throw new Error("Historical approval receipt required");
+      // Authenticate all historical approvals before any synchronous replay.
+      // Recheck each time: do not carry forward stale cached authorization.
+      const next = new Map<
+        string,
+        Awaited<ReturnType<typeof resolveGitHubSipApproval>>
+      >();
+      for (const event of this.journal.read(ticket)) {
+        if (event.event_type !== "SIP_APPROVED") continue;
+        const receipt = event.payload.receipt;
+        if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) {
+          throw new Error("Historical approval receipt required");
+        }
+        const candidate = receipt as SipApprovalReceipt;
+        next.set(
+          JSON.stringify(candidate),
+          await resolveGitHubSipApproval(candidate, this.policy, this.gateway),
+        );
       }
-      const candidate = receipt as SipApprovalReceipt;
-      next.set(
-        JSON.stringify(candidate),
-        await resolveGitHubSipApproval(candidate, this.policy, this.gateway),
-      );
-    }
-    if (type === "SIP_APPROVED") {
-      const receipt = payload.receipt;
-      if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) {
-        throw new Error("Approval receipt required");
+      if (type === "SIP_APPROVED") {
+        const receipt = payload.receipt;
+        if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) {
+          throw new Error("Approval receipt required");
+        }
+        const candidate = receipt as SipApprovalReceipt;
+        next.set(
+          JSON.stringify(candidate),
+          await resolveGitHubSipApproval(candidate, this.policy, this.gateway),
+        );
       }
-      const candidate = receipt as SipApprovalReceipt;
-      next.set(
-        JSON.stringify(candidate),
-        await resolveGitHubSipApproval(candidate, this.policy, this.gateway),
-      );
-    }
-    this.verified.clear();
-    for (const [key, value] of next) this.verified.set(key, value);
-    try {
-      return this.journal.append(ticket, type, actor, payload);
-    } finally {
       this.verified.clear();
-    }
+      for (const [key, value] of next) this.verified.set(key, value);
+      try {
+        return this.journal.append(ticket, type, actor, payload);
+      } finally {
+        this.verified.clear();
+      }
     } finally {
       this.busy = false;
     }
