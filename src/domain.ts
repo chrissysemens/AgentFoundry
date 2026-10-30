@@ -315,7 +315,7 @@ export function reduceEvents(
         assert(verified, "Trusted human approval evidence unavailable");
         validateSipApprovalReceipt(receipt, verified.sip, verified.human);
         assert(
-          e.timestamp >= receipt.approved_at,
+          Date.parse(e.timestamp) >= Date.parse(receipt.approved_at),
           "Approval cannot precede its source event",
         );
         s.approved_git_sha = receipt.sip_git_sha;
