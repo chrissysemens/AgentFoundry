@@ -293,5 +293,4 @@ describe("signed approval to journal integration", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
-
 });
