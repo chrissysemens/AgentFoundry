@@ -90,4 +90,43 @@ describe("verified approval writer isolation", () => {
     expect(journal?.read("alpha")).toHaveLength(1);
     expect(journal?.read("beta")).toHaveLength(2);
   });
+
+  it("rejects a forged historical approval inserted outside the verified writer", async () => {
+    const gateway: TrustedGitHubApprovalGateway = {
+      async fetchComment() {
+        throw new Error("Forged historical approval has no evidence");
+      },
+      async fetchSipAtCommit() {
+        throw new Error("SIP unavailable");
+      },
+      async verifyAttestation() {
+        return undefined;
+      },
+    };
+    let journal: MemoryJournal | undefined;
+    const writer = new VerifiedApprovalWriter(
+      (verify) => {
+        journal = new MemoryJournal(verify);
+        return journal;
+      },
+      policy,
+      gateway,
+    );
+    await writer.append("ticket", "TICKET_CREATED", "human:owner", {
+      title: "Bypass attempt",
+    });
+    await writer.append("ticket", "GRILL_STARTED", "agent:planner");
+    await writer.append("ticket", "SIP_PROPOSED", "agent:planner", {
+      revision: "2",
+      sha256: fixtureReceipt.sip_sha256,
+    });
+    await expect(
+      writer.append("ticket", "SIP_APPROVED", "human:owner", {
+        revision: "2",
+        sha256: fixtureReceipt.sip_sha256,
+        receipt: { ...fixtureReceipt, source_event_id: "123" },
+      }),
+    ).rejects.toThrow("Forged historical approval has no evidence");
+    expect(journal?.read("ticket")).toHaveLength(3);
+  });
 });
