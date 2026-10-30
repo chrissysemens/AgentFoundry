@@ -13,7 +13,10 @@ export async function prepareVerifiedApprovalVerifier(
   policy: GitHubApprovalPolicy,
   gateway: TrustedGitHubApprovalGateway,
 ): Promise<ApprovalEvidenceVerifier> {
-  const verified = new Map<string, Awaited<ReturnType<typeof resolveGitHubSipApproval>>>();
+  const verified = new Map<
+    string,
+    Awaited<ReturnType<typeof resolveGitHubSipApproval>>
+  >();
   for (const event of events) {
     if (event.event_type !== "SIP_APPROVED") continue;
     const receipt = event.payload.receipt as SipApprovalReceipt | undefined;
