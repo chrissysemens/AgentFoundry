@@ -30,7 +30,7 @@ function record(value: unknown): Record<string, unknown> {
 function repositoryParts(repository: string): [string, string] {
   const match = /^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/.exec(repository);
   if (!match) throw new Error("Invalid configured GitHub repository");
-  return [match[1], match[2]];
+  return [match[1]!, match[2]!];
 }
 
 /**
@@ -78,7 +78,7 @@ export function createReadOnlyGitHubApprovalGateway(
         repository,
         issue_number: Number(data.issue_url.slice(issuePrefix.length)),
         comment_id: data.id,
-        author_id: user.id,
+        author_id: user.id as number,
         author_type: user.type,
         created_at: data.created_at,
         updated_at: data.updated_at,
