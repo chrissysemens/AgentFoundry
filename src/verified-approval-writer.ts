@@ -25,7 +25,9 @@ export class VerifiedApprovalWriter {
     createJournal: (verifier: ApprovalEvidenceVerifier) => Journal,
     private readonly policy: GitHubApprovalPolicy,
     private readonly gateway: TrustedGitHubApprovalGateway,
+    private readonly trustedTicket: string,
   ) {
+    if (!trustedTicket.trim()) throw new Error("Trusted ticket ID required");
     this.journal = createJournal((receipt) =>
       this.verified.get(JSON.stringify(receipt)),
     );
@@ -37,6 +39,9 @@ export class VerifiedApprovalWriter {
     actor: string,
     payload: Payload = {},
   ): Promise<State> {
+    if (ticket !== this.trustedTicket) {
+      throw new Error("Ticket does not match trusted approval binding");
+    }
     if (this.busy) throw new Error("Concurrent verified writes forbidden");
     this.busy = true;
     try {
