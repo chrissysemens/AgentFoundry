@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { SQLiteJournal } from "../src/journal.ts";
+import { SQLiteJournal, makeEvent } from "../src/journal.ts";
+import { VerifiedApprovalWriter } from "../src/verified-approval-writer.ts";
+import type { TrustedGitHubApprovalGateway } from "../src/github-approval-resolver.ts";
+import { fixtureReceipt } from "./approval-fixture.ts";
 
 describe("SQLite journal tamper resistance", () => {
   it("rejects direct updates and deletes through a separate database connection", () => {
@@ -30,6 +33,60 @@ describe("SQLite journal tamper resistance", () => {
     } finally {
       external?.close();
       journal.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("fails closed when a separate connection inserts an unverified historical approval", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-insert-"));
+    const path = join(directory, "events.sqlite");
+    const holder: { journal?: SQLiteJournal } = {};
+    let external: DatabaseSync | undefined;
+    const gateway: TrustedGitHubApprovalGateway = {
+      async fetchComment() {
+        throw new Error("Independent evidence unavailable");
+      },
+      async fetchSipAtCommit() {
+        throw new Error("SIP unavailable");
+      },
+      async verifyAttestation() {
+        return undefined;
+      },
+    };
+    const count = () => holder.journal?.read("ticket").length ?? 0;
+    try {
+      const writer = new VerifiedApprovalWriter(
+        (verify) => {
+          holder.journal = new SQLiteJournal(path, verify);
+          return holder.journal;
+        },
+        {
+          repository: "owner/repo",
+          issue_number: 1,
+          allowed_human_ids: [123],
+        },
+        gateway,
+      );
+      await writer.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Direct insert",
+      });
+      external = new DatabaseSync(path);
+      const forged = makeEvent("ticket", "SIP_APPROVED", "human:owner", {
+        receipt: { ...fixtureReceipt, source_event_id: "123" },
+      });
+      external
+        .prepare(
+          "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",
+        )
+        .run(forged.event_id, "ticket", JSON.stringify(forged));
+      expect(count()).toBe(2);
+      await expect(
+        writer.append("ticket", "GRILL_STARTED", "agent:planner"),
+      ).rejects.toThrow("Independent evidence unavailable");
+      expect(count()).toBe(2);
+    } finally {
+      external?.close();
+      holder.journal?.close();
       rmSync(directory, { recursive: true, force: true });
     }
   });
