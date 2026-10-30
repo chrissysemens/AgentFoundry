@@ -40,6 +40,7 @@ describe("verified SQLite journal restart", () => {
         },
         policy,
         unavailable,
+        "ticket",
       );
       await first.append("ticket", "TICKET_CREATED", "human:owner", {
         title: "Persisted ticket",
@@ -54,6 +55,7 @@ describe("verified SQLite journal restart", () => {
         },
         policy,
         unavailable,
+        "ticket",
       );
       const state = await reopened.append(
         "ticket",
