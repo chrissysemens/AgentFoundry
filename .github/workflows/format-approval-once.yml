@@ -1,14 +1,36 @@
-name: Format approval evidence (retired)
+name: Format approval evidence (one-shot)
 
 on:
+  push:
+    branches:
+      - integration/found-002-r3
+    paths:
+      - .github/workflows/format-approval-once.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  retired:
+  format:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Confirm retired status
-        run: echo "One-time formatting completed; no repository writes."
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/found-002-r3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write tests/signed-approval-attestation.test.ts
+      - name: Commit formatter output only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/signed-approval-attestation.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "style: apply Prettier to signed approval tests"
+            git push
+          fi
