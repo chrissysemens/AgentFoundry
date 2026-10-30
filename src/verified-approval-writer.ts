@@ -19,6 +19,7 @@ export class VerifiedApprovalWriter {
     Awaited<ReturnType<typeof resolveGitHubSipApproval>>
   >();
   private readonly journal: Journal;
+  private busy = false;
 
   constructor(
     createJournal: (verifier: ApprovalEvidenceVerifier) => Journal,
@@ -36,6 +37,9 @@ export class VerifiedApprovalWriter {
     actor: string,
     payload: Payload = {},
   ): Promise<State> {
+    if (this.busy) throw new Error("Concurrent verified writes forbidden");
+    this.busy = true;
+    try {
     // Authenticate all historical approvals before any synchronous replay.
     // Recheck each time: do not carry forward stale cached authorization.
     const next = new Map<
@@ -71,6 +75,9 @@ export class VerifiedApprovalWriter {
       return this.journal.append(ticket, type, actor, payload);
     } finally {
       this.verified.clear();
+    }
+    } finally {
+      this.busy = false;
     }
   }
 }
