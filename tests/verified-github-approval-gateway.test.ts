@@ -57,10 +57,9 @@ describe("verified GitHub approval gateway", () => {
       { get: async () => signed },
       trust,
     );
-    await expect(gateway.fetchComment("owner/repo", 456)).resolves.toMatchObject({
-      author_id: 123,
-      issue_number: 7,
-    });
+    await expect(
+      gateway.fetchComment("owner/repo", 456),
+    ).resolves.toMatchObject({ author_id: 123, issue_number: 7 });
     await expect(gateway.fetchSipAtCommit("owner/repo", sha)).resolves.toMatchObject({
       git_sha: sha,
       utf8_content: "# SIP\n",
