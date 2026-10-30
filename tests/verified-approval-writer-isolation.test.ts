@@ -45,12 +45,9 @@ describe("verified approval writer isolation", () => {
     ).rejects.toThrow("Concurrent verified writes forbidden");
     release?.();
     await expect(first).rejects.toThrow("Evidence unavailable");
-    const state = await writer.append(
-      "ticket",
-      "TICKET_CREATED",
-      "human:owner",
-      { title: "Recovered" },
-    );
+    const state = await writer.append("ticket", "TICKET_CREATED", "human:owner", {
+      title: "Recovered",
+    });
     expect(state.title).toBe("Recovered");
   });
 
