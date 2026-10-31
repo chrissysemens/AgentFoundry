@@ -19,8 +19,14 @@ export function createVerifiedGitHubApprovalGateway(
   revision: string,
   store: ImmutableApprovalAttestationStore,
   trust: AttestationTrustPolicy,
+  trustedRevisionsByCommit?: Readonly<Record<string, string>>,
 ): TrustedGitHubApprovalGateway {
-  const github = createReadOnlyGitHubApprovalGateway(get, sipPath, revision);
+  const github = createReadOnlyGitHubApprovalGateway(
+    get,
+    sipPath,
+    revision,
+    trustedRevisionsByCommit,
+  );
   return {
     fetchComment: (repository, commentId) =>
       github.fetchComment(repository, commentId),
