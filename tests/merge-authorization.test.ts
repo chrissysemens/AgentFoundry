@@ -34,6 +34,29 @@ describe("separate merge authorization gate", () => {
     expect(() => check(state, evidence, [456])).toThrow();
   });
 
+  it("rejects malformed commit IDs and empty review identities", () => {
+    for (const changed of [
+      { code_revision: "not-a-full-sha" },
+      { code_revision: "A".repeat(40) },
+      { implementation_id: "" },
+      { review_id: "" },
+      { human_id: 0 },
+      { authorized_at: "not-a-timestamp" },
+    ]) {
+      expect(() => check(state, { ...evidence, ...changed })).toThrow();
+    }
+    const malformedState = {
+      ...state,
+      accepted_revision: "not-a-full-sha",
+    };
+    expect(() =>
+      check(malformedState, {
+        ...evidence,
+        code_revision: "not-a-full-sha",
+      }),
+    ).toThrow();
+  });
+
   it("rejects stale commit, review, ticket, and nonaccepted state", () => {
     for (const changed of [
       { code_revision: "b".repeat(40) },
