@@ -136,6 +136,24 @@ describe("signed merge decision verification", () => {
     ).rejects.toThrow("Invalid merge decision signature");
     await expect(
       verifySignedMergeDecision(
+        { get: async () => ({ ...entry, unsigned_override: true }) },
+        trust,
+        repository,
+        issue,
+        comment,
+      ),
+    ).rejects.toThrow("Unexpected signed merge decision fields");
+    await expect(
+      verifySignedMergeDecision(
+        { get: async () => ({ ...entry, payload: { ...payload, extra: "x" } }) },
+        trust,
+        repository,
+        issue,
+        comment,
+      ),
+    ).rejects.toThrow("Unexpected signed merge decision fields");
+    await expect(
+      verifySignedMergeDecision(
         store,
         { trusted_keys: trust.trusted_keys, revoked_key_ids: ["operator-1"] },
         repository,
