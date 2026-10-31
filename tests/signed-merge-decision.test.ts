@@ -23,7 +23,9 @@ const payload = {
 describe("signed merge decision verification", () => {
   it("accepts a valid Ed25519 decision and rejects tampering and replay", async () => {
     const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-    const publicPem = publicKey.export({ type: "spki", format: "pem" }).toString();
+    const publicPem = publicKey
+      .export({ type: "spki", format: "pem" })
+      .toString();
     const signature_base64 = sign(
       null,
       mergeDecisionSigningBytes(payload),
@@ -40,7 +42,12 @@ describe("signed merge decision verification", () => {
     ).rejects.toThrow();
     await expect(
       verifySignedMergeDecision(
-        { get: async () => ({ ...entry, payload: { ...payload, review_id: "forged" } }) },
+        {
+          get: async () => ({
+            ...entry,
+            payload: { ...payload, review_id: "forged" },
+          }),
+        },
         trust,
         repository,
         issue,
@@ -48,7 +55,13 @@ describe("signed merge decision verification", () => {
       ),
     ).rejects.toThrow("Invalid merge decision signature");
     await expect(
-      verifySignedMergeDecision(store, { trusted_keys: {} }, repository, issue, comment),
+      verifySignedMergeDecision(
+        store,
+        { trusted_keys: {} },
+        repository,
+        issue,
+        comment,
+      ),
     ).rejects.toThrow("Untrusted merge decision signing key");
   });
 });
