@@ -24,7 +24,10 @@ export function validateMergeAuthorization(
     evidence.ticket_id !== state.ticket_id ||
     evidence.implementation_id !== state.implementation_id ||
     evidence.code_revision !== state.accepted_revision ||
+    !/^[a-f0-9]{40}$/.test(evidence.code_revision) ||
     evidence.review_id !== state.last_review_id ||
+    !evidence.implementation_id ||
+    !evidence.review_id ||
     !Number.isSafeInteger(evidence.human_id) ||
     evidence.human_id <= 0 ||
     !allowedHumanIds.includes(evidence.human_id) ||
