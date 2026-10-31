@@ -102,9 +102,12 @@ stale accepted revisions, revoked decisions, concurrent requests, and failed
 storage/identity lookups. A test-only reader is not a production trust source.
 
 **Current status:** The GitHub comment adapter and journal gate exist, with
-regression tests for edited/forged comments and writer concurrency. An
-authenticated retained-decision verifier, protected deployment, and
-transactional cross-process authorization are **not implemented**. No
+regression tests for edited/forged comments and writer concurrency. A signed Ed25519 retained-decision verifier and its composition with the
+GitHub resolver are implemented and tested. Explicit key-ID revocation and
+rotation tests are also present, but the trust configuration is injected by
+the caller rather than authenticated from a protected control plane. External
+immutable retention, independent decision revocation, protected deployment,
+and transactional cross-process authorization are **not implemented**. No
 `MERGE_AUTHORIZED` event should be treated as production-authorized until
 these requirements are met.
 
