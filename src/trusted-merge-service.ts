@@ -94,6 +94,11 @@ export function createSignedGitHubTrustedMergeService(
   ) {
     throw new Error("Merge and SIP approval repository bindings differ");
   }
+  if (
+    allowedHumanIds.some((id) => !approvalPolicy.allowed_human_ids.includes(id))
+  ) {
+    throw new Error("Merge human allowlist exceeds SIP approval policy");
+  }
   const resolve = createSignedGitHubMergeAuthorizationResolver(
     getGitHub,
     decisionStore,
