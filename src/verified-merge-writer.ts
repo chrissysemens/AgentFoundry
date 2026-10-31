@@ -1,8 +1,6 @@
 import type { Payload, State } from "./domain.ts";
 import type { Journal } from "./journal.ts";
-import {
-  validateMergeAuthorization,
-} from "./merge-authorization.ts";
+import { validateMergeAuthorization } from "./merge-authorization.ts";
 import type { VerifiedMergeAuthorization } from "./merge-authorization.ts";
 
 /**
@@ -26,6 +24,7 @@ export class VerifiedMergeAuthorizationWriter {
     private readonly trustedTicket: string,
     private readonly allowedHumanIds: readonly number[],
     private readonly resolve: MergeAuthorizationResolver,
+    private readonly verifiedState: (ticket: string) => Promise<State>,
   ) {
     if (!trustedTicket.trim()) throw new Error("Trusted ticket ID required");
   }
@@ -43,11 +42,9 @@ export class VerifiedMergeAuthorizationWriter {
     this.busy = true;
     try {
       if (type === "MERGE_AUTHORIZED") {
-        const current = this.journal.read(ticket);
-        // The journal itself validates the event transition and actor.
-        // Evidence is independently obtained and must match the current state.
-        const { reduceEvents } = await import("./domain.ts");
-        const state = reduceEvents(ticket, current);
+        // The state loader must replay historical SIP approvals with their
+        // independently verified evidence; raw replay would fail closed.
+        const state = await this.verifiedState(ticket);
         const evidence = await this.resolve(ticket);
         validateMergeAuthorization(state, evidence, this.allowedHumanIds);
         if (actor !== `human:${evidence!.human_id}`) {
