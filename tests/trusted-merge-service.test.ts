@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { State } from "../src/domain.ts";
 import type { Journal } from "../src/journal.ts";
-import { TrustedMergeService } from "../src/trusted-merge-service.ts";
+import {
+  TrustedMergeService,
+  createSignedGitHubTrustedMergeService,
+} from "../src/trusted-merge-service.ts";
 
 const ticket = "FOUND-002";
 const revision = "a".repeat(40);
@@ -26,6 +29,28 @@ const state = {
 } as State;
 
 describe("trusted merge service facade", () => {
+  it("rejects inconsistent merge and SIP repository bindings", () => {
+    const journal = { read: vi.fn(() => []) } as unknown as Journal;
+    expect(() =>
+      createSignedGitHubTrustedMergeService(
+        journal,
+        ticket,
+        [123],
+        async () => ({}),
+        { get: async () => undefined },
+        { trusted_keys: {} },
+        "owner/repo",
+        1,
+        2,
+        { repository: "other/repo", issue_number: 1, allowed_human_ids: [123] },
+        {
+          fetchComment: async () => { throw new Error("unused"); },
+          fetchSipAtCommit: async () => { throw new Error("unused"); },
+          verifyAttestation: async () => undefined,
+        },
+      ),
+    ).toThrow("Merge and SIP approval repository bindings differ");
+  });
   it("requires independent evidence before conditional append", async () => {
     const conditional = vi.fn(() => ({ ...state, status: "MERGE_AUTHORIZED" }));
     const journal = {
