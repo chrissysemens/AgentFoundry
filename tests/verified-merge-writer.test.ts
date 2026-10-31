@@ -166,6 +166,37 @@ describe("verified merge journal boundary", () => {
     }
   });
 
+  it("accepts a matching authenticated GitHub comment and retained decision", async () => {
+    const get = vi.fn(async () => ({
+      id: 456,
+      issue_url: "https://api.github.com/repos/owner/repo/issues/7",
+      user: { id: 123, type: "User" },
+      created_at: evidence.authorized_at,
+      updated_at: evidence.authorized_at,
+      body: `MERGE AUTHORIZE ${ticket} impl-1 ${revision} review-1`,
+    }));
+    const reader = { get: vi.fn(async () => evidence) };
+    const resolve = createGitHubMergeAuthorizationResolver(
+      get,
+      reader,
+      "owner/repo",
+      7,
+      456,
+    );
+    const append = vi.fn(() => state);
+    const journal = { append, read: vi.fn(() => []) } as unknown as Journal;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      resolve,
+      async () => state,
+    );
+    await writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload);
+    expect(reader.get).toHaveBeenCalledWith("owner/repo", 456);
+    expect(append).toHaveBeenCalledOnce();
+  });
+
   it("does not append when independent verification fails", async () => {
     const { writer, append, verifiedState } = setup(evidence);
     verifiedState.mockRejectedValueOnce(new Error("Untrusted SIP history"));
