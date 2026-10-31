@@ -188,6 +188,56 @@ describe("approval capture", () => {
     ).rejects.toThrow("Retained approval verification mismatch");
   });
 
+  it("fails closed on conflicting retained approval after a write", async () => {
+    const conflicting = {
+      repository: event.repository,
+      issue_number: event.issue_number,
+      comment_id: event.comment_id,
+      author_id: event.author_id,
+      sip_revision: "other",
+      sip_git_sha: sha,
+      sip_sha256: digest(sip.utf8_content),
+      approved_at: time,
+    };
+    const retained: SignedApprovalAttestation = {
+      payload: conflicting,
+      key_id: signer.keyId,
+      signature_base64: sign(
+        null,
+        Buffer.from(
+          JSON.stringify([
+            "agent-foundry-sip-approval-v1",
+            conflicting.repository,
+            conflicting.issue_number,
+            conflicting.comment_id,
+            conflicting.author_id,
+            conflicting.sip_revision,
+            conflicting.sip_git_sha,
+            conflicting.sip_sha256,
+            conflicting.approved_at,
+          ]),
+        ),
+        privateKey,
+      ).toString("base64"),
+    };
+    const trust = {
+      trusted_keys: {
+        operator: publicKey.export({ type: "spki", format: "pem" }).toString(),
+      },
+    };
+    await expect(
+      captureAndVerifyApprovalEvidence(
+        event,
+        sip,
+        policy,
+        signer,
+        { createOnce: async () => {} },
+        { get: async () => retained },
+        trust,
+      ),
+    ).rejects.toThrow("Retained approval verification mismatch");
+  });
+
   it("propagates write-once storage failures", async () => {
     await expect(
       captureApprovalEvidence(event, sip, policy, signer, {
