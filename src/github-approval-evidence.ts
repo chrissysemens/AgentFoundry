@@ -100,3 +100,35 @@ export function matchGitHubApprovalEvidence(
     approved_at: event.created_at,
   };
 }
+
+/** Validate the authenticated source before any approval is signed or stored. */
+export function validateApprovalCaptureSource(
+  event: GitHubApprovalEvent,
+  attestation: ApprovalAttestation,
+  policy: GitHubApprovalPolicy,
+): void {
+  if (
+    event.repository !== policy.repository ||
+    attestation.repository !== policy.repository ||
+    event.issue_number !== policy.issue_number ||
+    attestation.issue_number !== policy.issue_number ||
+    event.comment_id !== attestation.comment_id ||
+    !Number.isSafeInteger(event.comment_id) ||
+    event.comment_id <= 0 ||
+    event.author_id !== attestation.author_id ||
+    !Number.isSafeInteger(event.author_id) ||
+    !policy.allowed_human_ids.includes(event.author_id) ||
+    event.author_type !== "User" ||
+    event.created_at !== event.updated_at ||
+    event.created_at !== attestation.approved_at ||
+    !Number.isFinite(Date.parse(event.created_at)) ||
+    !/^[a-f0-9]{40}$/.test(attestation.sip_git_sha) ||
+    !/^[a-f0-9]{64}$/.test(attestation.sip_sha256) ||
+    !attestation.sip_revision.trim() ||
+    !event.body.includes(attestation.sip_revision) ||
+    !event.body.includes(attestation.sip_git_sha) ||
+    !event.body.includes(attestation.sip_sha256)
+  ) {
+    throw new Error("Approval capture source is not trusted");
+  }
+}
