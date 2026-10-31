@@ -28,6 +28,18 @@ that this infrastructure is deployed.
   rotation, compromised keys, revocation and replay controls require an
   explicit policy; signature verification alone cannot establish them.
 
+## Capture service acceptance criteria
+
+The capture service must authenticate GitHub actor and issue identity, verify
+that the comment was not edited, and retrieve SIP bytes at an exact commit.
+The comment must explicitly bind revision, commit SHA, and recomputed digest.
+An isolated Ed25519 signer and externally enforced atomic create-only storage
+are required. A read-then-write check is not sufficient against concurrency.
+Retries must reject conflicting or revoked evidence, and success must require
+independent read-back verification. The capture service must not authorize
+merges or completion. This is a deployment requirement, not an implemented
+service.
+
 ## Fail-closed requirements
 
 Missing, malformed, tampered, revoked, stale or cross-repository evidence
