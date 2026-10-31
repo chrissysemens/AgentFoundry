@@ -90,7 +90,7 @@ export async function verifySignedMergeDecision(
   if (
     !verify(
       null,
-      mergeDecisionSigningBytes(a as SignedMergeDecision["payload"]),
+      mergeDecisionSigningBytes(a as unknown as SignedMergeDecision["payload"]),
       key,
       Buffer.from(entry.signature_base64, "base64"),
     )
