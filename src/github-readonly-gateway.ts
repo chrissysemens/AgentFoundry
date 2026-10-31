@@ -41,6 +41,7 @@ export function createReadOnlyGitHubApprovalGateway(
   get: AuthenticatedGitHubGet,
   sipPath: string,
   revision: string,
+  trustedRevisionsByCommit?: Readonly<Record<string, string>>,
 ): TrustedGitHubApprovalGateway {
   if (
     !sipPath ||
@@ -108,7 +109,16 @@ export function createReadOnlyGitHubApprovalGateway(
       if (!bytes.equals(Buffer.from(utf8, "utf8"))) {
         throw new Error("SIP must be valid UTF-8");
       }
-      return { revision, git_sha: gitSha, utf8_content: utf8 };
+      const resolvedRevision = trustedRevisionsByCommit
+        ? trustedRevisionsByCommit[gitSha]
+        : revision;
+      if (
+        typeof resolvedRevision !== "string" ||
+        resolvedRevision.trim().length === 0
+      ) {
+        throw new Error("Trusted SIP revision mapping required for commit");
+      }
+      return { revision: resolvedRevision, git_sha: gitSha, utf8_content: utf8 };
     },
     async verifyAttestation() {
       // Fail closed until a separate, authenticated immutable store is wired.
