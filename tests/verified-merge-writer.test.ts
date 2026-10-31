@@ -85,6 +85,43 @@ describe("verified merge journal boundary", () => {
     expect(append).not.toHaveBeenCalled();
   });
 
+  it("blocks concurrent requests while independent evidence is pending", async () => {
+    const { writer, append, resolve } = setup(evidence);
+    let release: ((value: typeof evidence) => void) | undefined;
+    resolve.mockImplementationOnce(
+      () =>
+        new Promise<typeof evidence>((done) => {
+          release = done;
+        }),
+    );
+    const first = writer.append(
+      ticket,
+      "MERGE_AUTHORIZED",
+      "human:123",
+      payload,
+    );
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledOnce());
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow("Concurrent merge writes forbidden");
+    expect(append).not.toHaveBeenCalled();
+    if (!release) throw new Error("Evidence resolver did not start");
+    release(evidence);
+    await first;
+    expect(append).toHaveBeenCalledOnce();
+  });
+
+  it("releases its lock after a failed verification for a later retry", async () => {
+    const { writer, append, resolve } = setup(evidence);
+    resolve.mockRejectedValueOnce(new Error("Identity provider unavailable"));
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow("Identity provider unavailable");
+    expect(append).not.toHaveBeenCalled();
+    await writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload);
+    expect(append).toHaveBeenCalledOnce();
+  });
+
   it("does not append when independent verification fails", async () => {
     const { writer, append, verifiedState } = setup(evidence);
     verifiedState.mockRejectedValueOnce(new Error("Untrusted SIP history"));
