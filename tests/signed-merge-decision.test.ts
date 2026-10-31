@@ -137,6 +137,15 @@ describe("signed merge decision verification", () => {
     await expect(
       verifySignedMergeDecision(
         store,
+        { trusted_keys: trust.trusted_keys, revoked_key_ids: ["operator-1"] },
+        repository,
+        issue,
+        comment,
+      ),
+    ).rejects.toThrow("Revoked merge decision signing key");
+    await expect(
+      verifySignedMergeDecision(
+        store,
         { trusted_keys: {} },
         repository,
         issue,
