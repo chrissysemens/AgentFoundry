@@ -117,11 +117,13 @@ export function validateApprovalCaptureSource(
     event.comment_id <= 0 ||
     event.author_id !== attestation.author_id ||
     !Number.isSafeInteger(event.author_id) ||
+    event.author_id <= 0 ||
     !policy.allowed_human_ids.includes(event.author_id) ||
     event.author_type !== "User" ||
     event.created_at !== event.updated_at ||
     event.created_at !== attestation.approved_at ||
     !Number.isFinite(Date.parse(event.created_at)) ||
+    !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$/.test(event.created_at) ||
     !/^[a-f0-9]{40}$/.test(attestation.sip_git_sha) ||
     !/^[a-f0-9]{64}$/.test(attestation.sip_sha256) ||
     !attestation.sip_revision.trim() ||
