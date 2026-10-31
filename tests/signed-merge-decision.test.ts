@@ -25,6 +25,43 @@ const payload = {
 };
 
 describe("signed merge decision verification", () => {
+  it("supports key rotation while refusing signatures from a retired key", async () => {
+    const oldKeys = generateKeyPairSync("ed25519");
+    const newKeys = generateKeyPairSync("ed25519");
+    const oldPublic = oldKeys.publicKey
+      .export({ type: "spki", format: "pem" })
+      .toString();
+    const newPublic = newKeys.publicKey
+      .export({ type: "spki", format: "pem" })
+      .toString();
+    const signed = (key_id: string, privateKey: typeof oldKeys.privateKey) => ({
+      payload,
+      key_id,
+      signature_base64: sign(
+        null,
+        mergeDecisionSigningBytes(payload),
+        privateKey,
+      ).toString("base64"),
+    });
+    let retained = signed("old", oldKeys.privateKey);
+    const store = { get: async () => retained };
+    const trust = {
+      trusted_keys: { old: oldPublic, new: newPublic },
+      revoked_key_ids: ["old"],
+    };
+    await expect(
+      verifySignedMergeDecision(store, trust, repository, issue, comment),
+    ).rejects.toThrow("Revoked merge decision signing key");
+    retained = signed("new", newKeys.privateKey);
+    await expect(
+      verifySignedMergeDecision(store, trust, repository, issue, comment),
+    ).resolves.toMatchObject(payload);
+    retained = signed("old", oldKeys.privateKey);
+    await expect(
+      verifySignedMergeDecision(store, trust, repository, issue, comment),
+    ).rejects.toThrow("Revoked merge decision signing key");
+  });
+
   it("gates journal writes on signed GitHub evidence", async () => {
     const { publicKey, privateKey } = generateKeyPairSync("ed25519");
     const trust = {
