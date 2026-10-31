@@ -25,7 +25,6 @@ export class VerifiedMergeAuthorizationWriter {
     private readonly allowedHumanIds: readonly number[],
     private readonly resolve: MergeAuthorizationResolver,
     private readonly verifiedState: (ticket: string) => Promise<State>,
-    private readonly requireAtomicAppend = false,
   ) {
     if (!trustedTicket.trim()) throw new Error("Trusted ticket ID required");
   }
@@ -45,50 +44,39 @@ export class VerifiedMergeAuthorizationWriter {
     if (this.busy) throw new Error("Concurrent merge writes forbidden");
     this.busy = true;
     try {
-      let observedEventId: string | undefined;
-      if (type === "MERGE_AUTHORIZED") {
-        // The state loader must replay historical SIP approvals with their
-        // independently verified evidence; raw replay would fail closed.
-        const state = await this.verifiedState(ticket);
-        if (this.requireAtomicAppend) {
-          observedEventId = state.history?.at(-1)?.event_id;
-          if (!observedEventId) {
-            throw new Error(
-              "Verified journal snapshot required for atomic merge",
-            );
-          }
-        }
-        const evidence = await this.resolve(ticket);
-        validateMergeAuthorization(state, evidence, this.allowedHumanIds);
-        if (actor !== `human:${evidence!.human_id}`) {
-          throw new Error("Merge actor does not match verified human");
-        }
-        if (
-          payload.implementation_id !== evidence!.implementation_id ||
-          payload.code_revision !== evidence!.code_revision ||
-          payload.review_id !== evidence!.review_id
-        ) {
-          throw new Error("Merge payload does not match verified decision");
-        }
+      // Replay the trusted history before fetching the independent decision.
+      const state = await this.verifiedState(ticket);
+      const observedEventId = state.history?.at(-1)?.event_id;
+      if (!observedEventId) {
+        throw new Error("Verified journal snapshot required for atomic merge");
       }
-      if (this.requireAtomicAppend) {
-        if (!observedEventId || !("appendIfLastEventMatches" in this.journal)) {
-          throw new Error("Atomic merge journal unavailable");
-        }
-        const conditional = this.journal.appendIfLastEventMatches;
-        if (typeof conditional !== "function") {
-          throw new Error("Atomic merge journal unavailable");
-        }
-        return conditional.call(
-          this.journal,
-          ticket,
-          observedEventId,
-          type,
-          actor,
-          payload,
-        );
+      const evidence = await this.resolve(ticket);
+      validateMergeAuthorization(state, evidence, this.allowedHumanIds);
+      if (actor !== `human:${evidence!.human_id}`) {
+        throw new Error("Merge actor does not match verified human");
       }
-      return this.journal.append(ticket, type, actor, payload);
+      if (
+        payload.implementation_id !== evidence!.implementation_id ||
+        payload.code_revision !== evidence!.code_revision ||
+        payload.review_id !== evidence!.review_id
+      ) {
+        throw new Error("Merge payload does not match verified decision");
+      }
+      if (!("appendIfLastEventMatches" in this.journal)) {
+        throw new Error("Atomic merge journal unavailable");
+      }
+      const conditional = this.journal.appendIfLastEventMatches;
+      if (typeof conditional !== "function") {
+        throw new Error("Atomic merge journal unavailable");
+      }
+      return conditional.call(
+        this.journal,
+        ticket,
+        observedEventId,
+        type,
+        actor,
+        payload,
+      );
     } finally {
       this.busy = false;
     }
