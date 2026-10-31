@@ -108,6 +108,39 @@ describe("approval capture", () => {
     ).rejects.toThrow("Invalid approval attestation signature");
   });
 
+  it("rejects invalid signer output without retaining evidence", async () => {
+    const createOnce = vi.fn(async () => {});
+    await expect(
+      captureApprovalEvidence(
+        event,
+        sip,
+        policy,
+        { keyId: "operator", signApproval: async () => Buffer.alloc(32) },
+        { createOnce },
+      ),
+    ).rejects.toThrow("Invalid Ed25519 approval signature");
+    expect(createOnce).not.toHaveBeenCalled();
+  });
+
+  it("does not retain evidence when the signer fails", async () => {
+    const createOnce = vi.fn(async () => {});
+    await expect(
+      captureApprovalEvidence(
+        event,
+        sip,
+        policy,
+        {
+          keyId: "operator",
+          signApproval: async () => {
+            throw new Error("Signer unavailable");
+          },
+        },
+        { createOnce },
+      ),
+    ).rejects.toThrow("Signer unavailable");
+    expect(createOnce).not.toHaveBeenCalled();
+  });
+
   it("propagates write-once storage failures", async () => {
     await expect(
       captureApprovalEvidence(event, sip, policy, signer, {
