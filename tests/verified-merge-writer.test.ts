@@ -43,6 +43,18 @@ function setup(decision: typeof evidence | undefined, current: State = state) {
 }
 
 describe("verified merge journal boundary", () => {
+  it("never allows other journal events to bypass the merge gate", async () => {
+    const { writer, append, resolve, verifiedState } = setup(evidence);
+    for (const type of ["COMPLETED", "SIP_APPROVED", "ACCEPTED"]) {
+      await expect(
+        writer.append(ticket, type, "human:123", payload),
+      ).rejects.toThrow("Merge writer only accepts MERGE_AUTHORIZED events");
+    }
+    expect(append).not.toHaveBeenCalled();
+    expect(resolve).not.toHaveBeenCalled();
+    expect(verifiedState).not.toHaveBeenCalled();
+  });
+
   it("writes only after independent evidence and verified replay", async () => {
     const { writer, append, resolve, verifiedState } = setup(evidence);
     await writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload);
