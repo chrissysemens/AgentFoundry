@@ -394,4 +394,55 @@ describe("verified merge journal boundary", () => {
     ).rejects.toThrow("Atomic merge journal unavailable");
     expect(ordinary).not.toHaveBeenCalled();
   });
+  it("rejects a journal change while asynchronous evidence is pending", async () => {
+    let lastEventId = "snapshot-1";
+    const ordinary = vi.fn(() => state);
+    const conditional = vi.fn(
+      (_ticket: string, expectedEventId: string): State => {
+        if (lastEventId !== expectedEventId) {
+          throw new Error("Journal changed since authorization verification");
+        }
+        return state;
+      },
+    );
+    const journal = {
+      append: ordinary,
+      read: vi.fn(() => []),
+      appendIfLastEventMatches: conditional,
+    } as unknown as Journal;
+    let release: ((value: typeof evidence) => void) | undefined;
+    const resolve = vi.fn(
+      () =>
+        new Promise<typeof evidence>((done) => {
+          release = done;
+        }),
+    );
+    const snapshot = {
+      ...state,
+      history: [{ event_id: lastEventId }],
+    } as State;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      resolve,
+      async () => snapshot,
+      true,
+    );
+    const pending = writer.append(
+      ticket,
+      "MERGE_AUTHORIZED",
+      "human:123",
+      payload,
+    );
+    await vi.waitFor(() => expect(resolve).toHaveBeenCalledOnce());
+    lastEventId = "competing-write";
+    if (!release) throw new Error("Evidence resolver did not start");
+    release(evidence);
+    await expect(pending).rejects.toThrow(
+      "Journal changed since authorization verification",
+    );
+    expect(conditional).toHaveBeenCalledOnce();
+    expect(ordinary).not.toHaveBeenCalled();
+  });
 });
