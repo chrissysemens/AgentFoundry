@@ -137,4 +137,31 @@ describe("SQLite journal tamper resistance", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+  it("rejects a stale merge authorization snapshot across connections", () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-cas-"));
+    const path = join(directory, "events.sqlite");
+    const first = new SQLiteJournal(path);
+    const second = new SQLiteJournal(path);
+    try {
+      first.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Original",
+      });
+      const observed = first.read("ticket").at(-1)?.event_id;
+      if (!observed) throw new Error("Missing observed event");
+      second.append("ticket", "GRILL_STARTED", "agent:planner");
+      expect(() =>
+        first.appendIfLastEventMatches(
+          "ticket",
+          observed,
+          "MERGE_AUTHORIZED",
+          "human:123",
+        ),
+      ).toThrow("Journal changed since authorization verification");
+      expect(first.read("ticket")).toHaveLength(2);
+    } finally {
+      second.close();
+      first.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
