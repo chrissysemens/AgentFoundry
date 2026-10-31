@@ -6,11 +6,10 @@ import type { VerifiedMergeAuthorization } from "./merge-authorization.ts";
  * approval store must confirm that the exact comment was authenticated,
  * recorded, and bound to the accepted code and Oracle review.
  */
+type RetainedDecision = VerifiedMergeAuthorization | undefined;
+
 export interface RetainedMergeDecisionReader {
-  get(
-    repository: string,
-    commentId: number,
-  ): Promise<VerifiedMergeAuthorization | undefined>;
+  get(repository: string, commentId: number): Promise<RetainedDecision>;
 }
 
 export function createGitHubMergeAuthorizationResolver(
@@ -29,8 +28,8 @@ export function createGitHubMergeAuthorizationResolver(
   }
   const [, owner, repo] = parts;
   const path = `/repos/${owner}/${repo}/issues/comments/${commentId}`;
-  const issueUrl =
-    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}`;
+  const issueUrl = `https://api.github.com/repos/${owner}/${repo}/issues/` +
+    issueNumber;
 
   return async (ticket) => {
     const raw: unknown = await get(path);
