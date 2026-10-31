@@ -26,10 +26,7 @@ const payload = {
   review_id: "review-1",
 };
 
-function setup(
-  decision: typeof evidence | undefined,
-  current: State = state,
-) {
+function setup(decision: typeof evidence | undefined, current: State = state) {
   const append = vi.fn(() => ({ ...current, status: "MERGE_AUTHORIZED" }));
   const journal = { append, read: vi.fn(() => []) } as unknown as Journal;
   const resolve = vi.fn(async () => decision);
@@ -61,7 +58,10 @@ describe("verified merge journal boundary", () => {
       { current: { ...state, status: "REWORK" } },
     ];
     for (const scenario of cases) {
-      const { writer, append } = setup(scenario.decision ?? evidence, scenario.current);
+      const { writer, append } = setup(
+        scenario.decision ?? evidence,
+        scenario.current,
+      );
       await expect(
         writer.append(
           ticket,
@@ -86,7 +86,7 @@ describe("verified merge journal boundary", () => {
   });
 
   it("does not append when independent verification fails", async () => {
-    const { writer, append, verifiedState } = setup();
+    const { writer, append, verifiedState } = setup(evidence);
     verifiedState.mockRejectedValueOnce(new Error("Untrusted SIP history"));
     await expect(
       writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
