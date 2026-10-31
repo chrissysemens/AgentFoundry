@@ -164,4 +164,33 @@ describe("SQLite journal tamper resistance", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+  it("does not commit a conditional merge while another connection owns the write lock", () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-cas-lock-"));
+    const path = join(directory, "events.sqlite");
+    const journal = new SQLiteJournal(path);
+    const external = new DatabaseSync(path);
+    try {
+      journal.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Locked authorization",
+      });
+      const observed = journal.read("ticket").at(-1)?.event_id;
+      if (!observed) throw new Error("Missing observed event");
+      external.exec("BEGIN IMMEDIATE");
+      expect(() =>
+        journal.appendIfLastEventMatches(
+          "ticket",
+          observed,
+          "MERGE_AUTHORIZED",
+          "human:123",
+        ),
+      ).toThrow();
+      expect(journal.read("ticket")).toHaveLength(1);
+      external.exec("ROLLBACK");
+      expect(journal.read("ticket")).toHaveLength(1);
+    } finally {
+      external.close();
+      journal.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
