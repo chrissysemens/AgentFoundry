@@ -371,4 +371,27 @@ describe("verified merge journal boundary", () => {
     expect(conditional).toHaveBeenCalledOnce();
     expect(ordinary).not.toHaveBeenCalled();
   });
+  it("rejects a journal without transactional append in atomic mode", async () => {
+    const snapshot = {
+      ...state,
+      history: [{ event_id: "snapshot-1" }],
+    } as State;
+    const ordinary = vi.fn(() => state);
+    const journal = {
+      append: ordinary,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      async () => evidence,
+      async () => snapshot,
+      true,
+    );
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow("Atomic merge journal unavailable");
+    expect(ordinary).not.toHaveBeenCalled();
+  });
 });
