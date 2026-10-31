@@ -8,7 +8,10 @@ import type {
 import type { VerifiedSipContent } from "./sip-approval.ts";
 import { approvalAttestationSigningBytes } from "./signed-approval-attestation.ts";
 import type { SignedApprovalAttestation } from "./signed-approval-attestation.ts";
-import type { ApprovalRetentionWriter, ApprovalSigner } from "./approval-capture-types.ts";
+import type {
+  ApprovalRetentionWriter,
+  ApprovalSigner,
+} from "./approval-capture-types.ts";
 
 /**
  * Capture from independently authenticated GitHub and exact-commit SIP data.
