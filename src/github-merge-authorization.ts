@@ -28,8 +28,13 @@ export function createGitHubMergeAuthorizationResolver(
   }
   const [, owner, repo] = parts;
   const path = `/repos/${owner}/${repo}/issues/comments/${commentId}`;
-  const issueUrl = `https://api.github.com/repos/${owner}/${repo}/issues/` +
-    issueNumber;
+  const issueUrl = [
+    "https://api.github.com/repos",
+    owner,
+    repo,
+    "issues",
+    issueNumber,
+  ].join("/");
 
   return async (ticket) => {
     const raw: unknown = await get(path);
