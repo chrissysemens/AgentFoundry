@@ -9,7 +9,10 @@ import type { SignedApprovalAttestation } from "./signed-approval-attestation.ts
  * The gateway must authenticate GitHub and retrieve exact-commit SIP bytes.
  */
 export async function captureGitHubApproval(
-  gateway: Pick<TrustedGitHubApprovalGateway, "fetchComment" | "fetchSipAtCommit">,
+  gateway: Pick<
+    TrustedGitHubApprovalGateway,
+    "fetchComment" | "fetchSipAtCommit"
+  >,
   policy: GitHubApprovalPolicy,
   commentId: number,
   trustedSipGitSha: string,
@@ -30,7 +33,10 @@ export async function captureGitHubApproval(
   ) {
     throw new Error("Authenticated GitHub comment identity mismatch");
   }
-  const sip = await gateway.fetchSipAtCommit(policy.repository, trustedSipGitSha);
+  const sip = await gateway.fetchSipAtCommit(
+    policy.repository,
+    trustedSipGitSha,
+  );
   if (sip.git_sha !== trustedSipGitSha) {
     throw new Error("Authenticated SIP commit identity mismatch");
   }
