@@ -21,7 +21,6 @@ const evidence = {
 const check = (
   current: State = state,
   approval: typeof evidence | undefined,
-
   humans: number[] = [123],
 ) => validateMergeAuthorization(current, approval, humans);
 
