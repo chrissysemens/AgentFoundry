@@ -293,4 +293,54 @@ describe("verified merge journal boundary", () => {
     ).rejects.toThrow("Untrusted SIP history");
     expect(append).not.toHaveBeenCalled();
   });
+  it("uses conditional append after verification in atomic mode", async () => {
+    const snapshot = {
+      ...state,
+      history: [{ event_id: "snapshot-1" }],
+    } as State;
+    const conditional = vi.fn(() => state);
+    const ordinary = vi.fn(() => state);
+    const journal = {
+      append: ordinary,
+      read: vi.fn(() => []),
+      appendIfLastEventMatches: conditional,
+    } as unknown as Journal;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      async () => evidence,
+      async () => snapshot,
+      true,
+    );
+    await writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload);
+    expect(conditional).toHaveBeenCalledWith(
+      ticket,
+      "snapshot-1",
+      "MERGE_AUTHORIZED",
+      "human:123",
+      payload,
+    );
+    expect(ordinary).not.toHaveBeenCalled();
+  });
+
+  it("fails closed in atomic mode without a verified snapshot", async () => {
+    const ordinary = vi.fn(() => state);
+    const journal = {
+      append: ordinary,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      async () => evidence,
+      async () => state,
+      true,
+    );
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow("Verified journal snapshot required for atomic merge");
+    expect(ordinary).not.toHaveBeenCalled();
+  });
 });
