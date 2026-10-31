@@ -15,9 +15,7 @@ export function createRetainedMergeDecisionStore(
         parts.length !== 2 ||
         parts.some(
           (part) =>
-            !/^[A-Za-z0-9_.-]+$/.test(part) ||
-            part === "." ||
-            part === "..",
+            !/^[A-Za-z0-9_.-]+$/.test(part) || part === "." || part === "..",
         )
       ) {
         throw new Error("Invalid merge decision repository");

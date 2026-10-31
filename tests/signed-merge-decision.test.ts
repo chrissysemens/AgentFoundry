@@ -34,10 +34,7 @@ describe("signed merge decision verification", () => {
     const newPublic = newKeys.publicKey
       .export({ type: "spki", format: "pem" })
       .toString();
-    const signed = (
-      key_id: string,
-      privateKey: typeof oldKeys.privateKey,
-    ) => ({
+    const signed = (key_id: string, privateKey: typeof oldKeys.privateKey) => ({
       payload,
       key_id,
       signature_base64: sign(
