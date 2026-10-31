@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { State } from "../src/domain.ts";
 import type { Journal } from "../src/journal.ts";
 import { VerifiedMergeAuthorizationWriter } from "../src/verified-merge-writer.ts";
+import { createGitHubMergeAuthorizationResolver } from "../src/github-merge-authorization.ts";
 
 const ticket = "FOUND-002";
 const revision = "a".repeat(40);
@@ -120,6 +121,49 @@ describe("verified merge journal boundary", () => {
     expect(append).not.toHaveBeenCalled();
     await writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload);
     expect(append).toHaveBeenCalledOnce();
+  });
+
+  it("rejects forged or edited GitHub merge comments before journal append", async () => {
+    const comment = {
+      id: 456,
+      issue_url: "https://api.github.com/repos/owner/repo/issues/7",
+      user: { id: 123, type: "User" },
+      created_at: evidence.authorized_at,
+      updated_at: evidence.authorized_at,
+      body: `MERGE AUTHORIZE ${ticket} impl-1 ${revision} review-1`,
+    };
+    for (const changed of [
+      { updated_at: "2026-11-01T00:00:00.000Z" },
+      { user: { id: 999, type: "User" } },
+      { body: "approved" },
+      { issue_url: "https://api.github.com/repos/owner/repo/issues/8" },
+    ]) {
+      const { append } = setup(evidence);
+      const get = vi.fn(async () => ({ ...comment, ...changed }));
+      const reader = { get: vi.fn(async () => evidence) };
+      const resolve = createGitHubMergeAuthorizationResolver(
+        get,
+        reader,
+        "owner/repo",
+        7,
+        456,
+      );
+      const journal = {
+        append,
+        read: vi.fn(() => []),
+      } as unknown as Journal;
+      const writer = new VerifiedMergeAuthorizationWriter(
+        journal,
+        ticket,
+        [123],
+        resolve,
+        async () => state,
+      );
+      await expect(
+        writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+      ).rejects.toThrow();
+      expect(append).not.toHaveBeenCalled();
+    }
   });
 
   it("does not append when independent verification fails", async () => {
