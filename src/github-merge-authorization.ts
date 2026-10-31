@@ -1,5 +1,12 @@
 import type { AuthenticatedGitHubGet } from "./github-readonly-gateway.ts";
 import type { VerifiedMergeAuthorization } from "./merge-authorization.ts";
+import {
+  verifySignedMergeDecision,
+} from "./signed-merge-decision.ts";
+import type {
+  MergeDecisionTrustPolicy,
+  SignedMergeDecisionStore,
+} from "./signed-merge-decision.ts";
 
 /**
  * GitHub comments are only identity and intent evidence. A separate trusted
@@ -84,4 +91,30 @@ export function createGitHubMergeAuthorizationResolver(
     }
     return decision;
   };
+}
+
+/**
+ * Production-facing composition: the retained decision is accepted only after
+ * signature verification against operator-configured keys. The store must
+ * independently enforce retention and revocation; this wrapper cannot do so.
+ */
+export function createSignedGitHubMergeAuthorizationResolver(
+  get: AuthenticatedGitHubGet,
+  store: SignedMergeDecisionStore,
+  trust: MergeDecisionTrustPolicy,
+  repository: string,
+  issueNumber: number,
+  commentId: number,
+): (ticket: string) => Promise<VerifiedMergeAuthorization | undefined> {
+  const retained: RetainedMergeDecisionReader = {
+    get: (repo, id) =>
+      verifySignedMergeDecision(store, trust, repo, issueNumber, id),
+  };
+  return createGitHubMergeAuthorizationResolver(
+    get,
+    retained,
+    repository,
+    issueNumber,
+    commentId,
+  );
 }
