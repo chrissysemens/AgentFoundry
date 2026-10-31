@@ -30,7 +30,10 @@ const payload = {
 
 function setup(decision: typeof evidence | undefined, current: State = state) {
   const append = vi.fn(() => ({ ...current, status: "MERGE_AUTHORIZED" }));
-  const journal = { appendIfLastEventMatches: append, read: vi.fn(() => []) } as unknown as Journal;
+  const journal = {
+      appendIfLastEventMatches: append,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
   const resolve = vi.fn(async () => decision);
   const verifiedState = vi.fn(async () => current);
   const writer = new VerifiedMergeAuthorizationWriter(
@@ -197,7 +200,10 @@ describe("verified merge journal boundary", () => {
       456,
     );
     const append = vi.fn(() => state);
-    const journal = { appendIfLastEventMatches: append, read: vi.fn(() => []) } as unknown as Journal;
+    const journal = {
+      appendIfLastEventMatches: append,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
     const writer = new VerifiedMergeAuthorizationWriter(
       journal,
       ticket,
@@ -235,7 +241,10 @@ describe("verified merge journal boundary", () => {
         456,
       );
       const append = vi.fn(() => state);
-      const journal = { appendIfLastEventMatches: append, read: vi.fn(() => []) } as unknown as Journal;
+      const journal = {
+      appendIfLastEventMatches: append,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
       const writer = new VerifiedMergeAuthorizationWriter(
         journal,
         ticket,
@@ -272,7 +281,10 @@ describe("verified merge journal boundary", () => {
       456,
     );
     const append = vi.fn(() => state);
-    const journal = { appendIfLastEventMatches: append, read: vi.fn(() => []) } as unknown as Journal;
+    const journal = {
+      appendIfLastEventMatches: append,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
     const writer = new VerifiedMergeAuthorizationWriter(
       journal,
       ticket,
