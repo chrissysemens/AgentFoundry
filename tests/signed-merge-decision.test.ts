@@ -145,7 +145,12 @@ describe("signed merge decision verification", () => {
     ).rejects.toThrow("Unexpected signed merge decision fields");
     await expect(
       verifySignedMergeDecision(
-        { get: async () => ({ ...entry, payload: { ...payload, extra: "x" } }) },
+        {
+          get: async () => ({
+            ...entry,
+            payload: { ...payload, extra: "x" },
+          }),
+        },
         trust,
         repository,
         issue,
