@@ -107,7 +107,10 @@ describe("signed merge decision verification", () => {
       history: [{ event_id: "signed-snapshot" }],
     } as State;
     const append = vi.fn(() => current);
-    const journal = { appendIfLastEventMatches: append, read: vi.fn(() => []) } as unknown as Journal;
+    const journal = {
+      appendIfLastEventMatches: append,
+      read: vi.fn(() => []),
+    } as unknown as Journal;
     const writer = new VerifiedMergeAuthorizationWriter(
       journal,
       payload.ticket_id,
