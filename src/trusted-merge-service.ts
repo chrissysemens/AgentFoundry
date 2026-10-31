@@ -1,3 +1,12 @@
+import type { TrustedGitHubApprovalGateway } from "./github-approval-resolver.ts";
+import type { GitHubApprovalPolicy } from "./github-approval-evidence.ts";
+import type { AuthenticatedGitHubGet } from "./github-readonly-gateway.ts";
+import { createSignedGitHubMergeAuthorizationResolver } from "./github-merge-authorization.ts";
+import type {
+  MergeDecisionTrustPolicy,
+  SignedMergeDecisionStore,
+} from "./signed-merge-decision.ts";
+import { replayWithVerifiedGitHubApprovals } from "./verified-approval-journal.ts";
 import type { Payload, State } from "./domain.ts";
 import type { Journal } from "./journal.ts";
 import type { MergeAuthorizationResolver } from "./verified-merge-writer.ts";
@@ -58,5 +67,51 @@ export function createTrustedMergeService(
     allowedHumanIds,
     resolveSignedDecision,
     replayVerifiedApprovals,
+  );
+}
+
+/**
+ * Compose the authenticated GitHub comment, retained signed decision and
+ * independent SIP approval replay in one trusted-process service.
+ * Database file permissions must separately enforce writer isolation.
+ */
+export function createSignedGitHubTrustedMergeService(
+  journal: Journal,
+  ticket: string,
+  allowedHumanIds: readonly number[],
+  getGitHub: AuthenticatedGitHubGet,
+  decisionStore: SignedMergeDecisionStore,
+  decisionTrust: MergeDecisionTrustPolicy,
+  repository: string,
+  issueNumber: number,
+  commentId: number,
+  approvalPolicy: GitHubApprovalPolicy,
+  approvalGateway: TrustedGitHubApprovalGateway,
+): TrustedMergeService {
+  if (approvalPolicy.repository !== repository ||
+      approvalPolicy.issue_number !== issueNumber) {
+    throw new Error("Merge and SIP approval repository bindings differ");
+  }
+  const resolve = createSignedGitHubMergeAuthorizationResolver(
+    getGitHub,
+    decisionStore,
+    decisionTrust,
+    repository,
+    issueNumber,
+    commentId,
+  );
+  const verifiedState = (id: string) =>
+    replayWithVerifiedGitHubApprovals(
+      id,
+      journal.read(id),
+      approvalPolicy,
+      approvalGateway,
+    );
+  return createTrustedMergeService(
+    journal,
+    ticket,
+    allowedHumanIds,
+    resolve,
+    verifiedState,
   );
 }
