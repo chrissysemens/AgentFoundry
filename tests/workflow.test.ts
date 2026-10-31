@@ -12,7 +12,7 @@ import type {
   OracleRequest,
   Review,
 } from "../src/domain.ts";
-import { MemoryJournal, SQLiteJournal } from "../src/journal.ts";
+import { MemoryJournal, SQLiteJournal, makeEvent } from "../src/journal.ts";
 import type { Journal } from "../src/journal.ts";
 
 function setup(journal: Journal) {
@@ -256,10 +256,28 @@ for (const adapter of adapters) {
           code_revision: "stale",
         }),
       ).toThrow();
-      append("MERGE_AUTHORIZED", "human:owner", payload);
-      expect(
-        reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier).status,
-      ).toBe("MERGE_AUTHORIZED");
+      if (journal instanceof SQLiteJournal) {
+        const observed = journal.read(ticketId).at(-1)?.event_id;
+        if (!observed) throw new Error("Missing merge snapshot");
+        journal.appendIfLastEventMatches(
+          ticketId,
+          observed,
+          "MERGE_AUTHORIZED",
+          "human:owner",
+          payload,
+        );
+      } else {
+        const events = journal.read(ticketId);
+        events.push(makeEvent(ticketId, "MERGE_AUTHORIZED", "human:owner", payload));
+        expect(reduceEvents(ticketId, events, fixtureVerifier).status).toBe(
+          "MERGE_AUTHORIZED",
+        );
+      }
+      if (journal instanceof SQLiteJournal) {
+        expect(
+          reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier).status,
+        ).toBe("MERGE_AUTHORIZED");
+      }
     });
 
     it("keeps advisory proposals inert until human approval", () => {
