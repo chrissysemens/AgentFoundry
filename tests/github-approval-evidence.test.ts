@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   matchGitHubApprovalEvidence,
+  validateApprovalCaptureSource,
   type ApprovalAttestation,
   type GitHubApprovalEvent,
   type GitHubApprovalPolicy,
@@ -135,5 +136,38 @@ describe("GitHub approval evidence matching", () => {
         policy,
       ),
     ).toThrow("explicitly bind");
+  });
+});
+
+describe("approval capture source validation", () => {
+  it("accepts independently authenticated matching source metadata", () => {
+    expect(() => validateApprovalCaptureSource(event, attestation, policy)).not.toThrow();
+  });
+
+  it("rejects edited comments and unauthorized actors before signing", () => {
+    expect(() =>
+      validateApprovalCaptureSource(
+        { ...event, updated_at: "2026-10-31T00:00:00.000Z" },
+        attestation,
+        policy,
+      ),
+    ).toThrow("Approval capture source is not trusted");
+    expect(() =>
+      validateApprovalCaptureSource(
+        { ...event, author_id: 999 },
+        attestation,
+        policy,
+      ),
+    ).toThrow("Approval capture source is not trusted");
+  });
+
+  it("rejects a mismatched SIP commit or digest", () => {
+    expect(() =>
+      validateApprovalCaptureSource(
+        event,
+        { ...attestation, sip_git_sha: "c".repeat(40) },
+        policy,
+      ),
+    ).toThrow("Approval capture source is not trusted");
   });
 });
