@@ -24,16 +24,16 @@ export function mergeDecisionSigningBytes(
 ): Buffer {
   return Buffer.from(
     JSON.stringify([
-    "agent-foundry-merge-decision-v1",
-    payload.repository,
-    payload.issue_number,
-    payload.comment_id,
-    payload.ticket_id,
-    payload.implementation_id,
-    payload.code_revision,
-    payload.review_id,
-    payload.human_id,
-    payload.authorized_at,
+      "agent-foundry-merge-decision-v1",
+      payload.repository,
+      payload.issue_number,
+      payload.comment_id,
+      payload.ticket_id,
+      payload.implementation_id,
+      payload.code_revision,
+      payload.review_id,
+      payload.human_id,
+      payload.authorized_at,
     ]),
     "utf8",
   );
