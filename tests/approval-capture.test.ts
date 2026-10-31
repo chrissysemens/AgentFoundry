@@ -2,7 +2,10 @@ import { generateKeyPairSync, sign } from "node:crypto";
 import { verifySignedApprovalAttestation } from "../src/signed-approval-attestation.ts";
 import type { SignedApprovalAttestation } from "../src/signed-approval-attestation.ts";
 import { describe, expect, it, vi } from "vitest";
-import { captureApprovalEvidence } from "../src/approval-capture.ts";
+import {
+  captureAndVerifyApprovalEvidence,
+  captureApprovalEvidence,
+} from "../src/approval-capture.ts";
 import { digest } from "../src/domain.ts";
 
 const { privateKey, publicKey } = generateKeyPairSync("ed25519");
@@ -139,6 +142,44 @@ describe("approval capture", () => {
       ),
     ).rejects.toThrow("Signer unavailable");
     expect(createOnce).not.toHaveBeenCalled();
+  });
+
+  it("requires independent read-back before reporting capture success", async () => {
+    const records = new Map<string, SignedApprovalAttestation>();
+    const retention = {
+      createOnce: async (
+        repository: string,
+        commentId: number,
+        signed: SignedApprovalAttestation,
+      ) => {
+        records.set(`${repository}/${commentId}`, signed);
+      },
+    };
+    const reader = {
+      get: async (repository: string, commentId: number) =>
+        records.get(`${repository}/${commentId}`),
+    };
+    const trust = {
+      trusted_keys: {
+        operator: publicKey.export({ type: "spki", format: "pem" }).toString(),
+      },
+    };
+    await expect(
+      captureAndVerifyApprovalEvidence(
+        event, sip, policy, signer, retention, reader, trust,
+      ),
+    ).resolves.toMatchObject({ key_id: "operator" });
+    await expect(
+      captureAndVerifyApprovalEvidence(
+        event,
+        sip,
+        policy,
+        signer,
+        { createOnce: async () => {} },
+        { get: async () => undefined },
+        trust,
+      ),
+    ).rejects.toThrow("Retained approval verification mismatch");
   });
 
   it("propagates write-once storage failures", async () => {
