@@ -29,13 +29,19 @@ describe("signed merge decision verification", () => {
     const { publicKey, privateKey } = generateKeyPairSync("ed25519");
     const trust = {
       trusted_keys: {
-        "operator-1": publicKey.export({ type: "spki", format: "pem" }).toString(),
+        "operator-1": publicKey
+          .export({ type: "spki", format: "pem" })
+          .toString(),
       },
     };
     const entry = {
       payload,
       key_id: "operator-1",
-      signature_base64: sign(null, mergeDecisionSigningBytes(payload), privateKey).toString("base64"),
+      signature_base64: sign(
+        null,
+        mergeDecisionSigningBytes(payload),
+        privateKey,
+      ).toString("base64"),
     };
     const get = vi.fn(async () => ({
       id: comment,
@@ -48,7 +54,12 @@ describe("signed merge decision verification", () => {
     let retained: unknown = entry;
     const store = { get: vi.fn(async () => retained) };
     const resolver = createSignedGitHubMergeAuthorizationResolver(
-      get, store, trust, repository, issue, comment,
+      get,
+      store,
+      trust,
+      repository,
+      issue,
+      comment,
     );
     const current = {
       ticket_id: payload.ticket_id,
@@ -60,18 +71,32 @@ describe("signed merge decision verification", () => {
     const append = vi.fn(() => current);
     const journal = { append, read: vi.fn(() => []) } as unknown as Journal;
     const writer = new VerifiedMergeAuthorizationWriter(
-      journal, payload.ticket_id, [123], resolver, async () => current,
+      journal,
+      payload.ticket_id,
+      [123],
+      resolver,
+      async () => current,
     );
     const eventPayload = {
       implementation_id: payload.implementation_id,
       code_revision: payload.code_revision,
       review_id: payload.review_id,
     };
-    await writer.append(payload.ticket_id, "MERGE_AUTHORIZED", "human:123", eventPayload);
+    await writer.append(
+      payload.ticket_id,
+      "MERGE_AUTHORIZED",
+      "human:123",
+      eventPayload,
+    );
     expect(append).toHaveBeenCalledOnce();
     retained = { ...entry, payload: { ...payload, review_id: "forged" } };
     await expect(
-      writer.append(payload.ticket_id, "MERGE_AUTHORIZED", "human:123", eventPayload),
+      writer.append(
+        payload.ticket_id,
+        "MERGE_AUTHORIZED",
+        "human:123",
+        eventPayload,
+      ),
     ).rejects.toThrow("Invalid merge decision signature");
     expect(append).toHaveBeenCalledOnce();
   });
