@@ -17,6 +17,7 @@ export interface SignedMergeDecisionStore {
 
 export interface MergeDecisionTrustPolicy {
   trusted_keys: Readonly<Record<string, string>>;
+  revoked_key_ids?: readonly string[];
 }
 
 export function mergeDecisionSigningBytes(
@@ -78,6 +79,9 @@ export async function verifySignedMergeDecision(
     !/^[A-Za-z0-9+/]{86}==$/.test(entry.signature_base64)
   ) {
     throw new Error("Malformed signed merge decision");
+  }
+  if (trust.revoked_key_ids?.includes(entry.key_id)) {
+    throw new Error("Revoked merge decision signing key");
   }
   const publicKey = Object.hasOwn(trust.trusted_keys, entry.key_id)
     ? trust.trusted_keys[entry.key_id]
