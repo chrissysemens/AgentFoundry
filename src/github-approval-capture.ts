@@ -1,6 +1,9 @@
 import type { TrustedGitHubApprovalGateway } from "./github-approval-resolver.ts";
 import type { GitHubApprovalPolicy } from "./github-approval-evidence.ts";
-import type { ApprovalRetentionWriter, ApprovalSigner } from "./approval-capture-types.ts";
+import type {
+  ApprovalRetentionWriter,
+  ApprovalSigner,
+} from "./approval-capture-types.ts";
 import { captureApprovalEvidence } from "./approval-capture.ts";
 import type { SignedApprovalAttestation } from "./signed-approval-attestation.ts";
 
