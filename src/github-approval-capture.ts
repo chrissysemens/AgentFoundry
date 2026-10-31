@@ -38,7 +38,10 @@ export async function captureGitHubApproval(
   ) {
     throw new Error("Authenticated GitHub comment identity mismatch");
   }
-  const sip = await gateway.fetchSipAtCommit(policy.repository, trustedSipGitSha);
+  const sip = await gateway.fetchSipAtCommit(
+    policy.repository,
+    trustedSipGitSha,
+  );
   if (sip.git_sha !== trustedSipGitSha) {
     throw new Error("Authenticated SIP commit identity mismatch");
   }
