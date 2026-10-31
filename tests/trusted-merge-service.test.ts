@@ -42,10 +42,18 @@ describe("trusted merge service facade", () => {
         "owner/repo",
         1,
         2,
-        { repository: "other/repo", issue_number: 1, allowed_human_ids: [123] },
         {
-          fetchComment: async () => { throw new Error("unused"); },
-          fetchSipAtCommit: async () => { throw new Error("unused"); },
+          repository: "other/repo",
+          issue_number: 1,
+          allowed_human_ids: [123],
+        },
+        {
+          fetchComment: async () => {
+            throw new Error("unused");
+          },
+          fetchSipAtCommit: async () => {
+            throw new Error("unused");
+          },
           verifyAttestation: async () => undefined,
         },
       ),
