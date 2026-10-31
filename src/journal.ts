@@ -57,6 +57,7 @@ export class SQLiteJournal implements Journal {
   constructor(
     path: string,
     private readonly verifyApproval?: ApprovalEvidenceVerifier,
+    private readonly allowPrivilegedMergeWrites = false,
   ) {
     this.db = new DatabaseSync(path);
     this.db.exec(
@@ -136,6 +137,9 @@ export class SQLiteJournal implements Journal {
     actor: string,
     payload: Payload = {},
   ): State {
+    if (!this.allowPrivilegedMergeWrites) {
+      throw new Error("Privileged merge writes disabled for this journal");
+    }
     if (type !== "MERGE_AUTHORIZED") {
       throw new Error("Conditional append only accepts merge authorization");
     }
