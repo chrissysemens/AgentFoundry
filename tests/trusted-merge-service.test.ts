@@ -1,4 +1,6 @@
+import { generateKeyPairSync, sign } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
+import { mergeDecisionSigningBytes } from "../src/signed-merge-decision.ts";
 import type { State } from "../src/domain.ts";
 import type { Journal } from "../src/journal.ts";
 import {
@@ -59,6 +61,81 @@ describe("trusted merge service facade", () => {
       ),
     ).toThrow("Merge and SIP approval repository bindings differ");
   });
+  it("rejects a signed decision when independent SIP replay cannot verify approval", async () => {
+    const keys = generateKeyPairSync("ed25519");
+    const signedPayload = {
+      repository: "owner/repo",
+      issue_number: 1,
+      comment_id: 2,
+      ticket_id: ticket,
+      ...payload,
+      human_id: 123,
+      authorized_at: evidence.authorized_at,
+    };
+    const entry = {
+      payload: signedPayload,
+      key_id: "operator",
+      signature_base64: sign(
+        null,
+        mergeDecisionSigningBytes(signedPayload),
+        keys.privateKey,
+      ).toString("base64"),
+    };
+    const conditional = vi.fn();
+    const journal = {
+      read: vi.fn(() => [
+        {
+          event_id: "snapshot-1",
+          ticket_id: ticket,
+          event_type: "SIP_APPROVED",
+          actor: "human:123",
+          timestamp: evidence.authorized_at,
+          payload: {},
+        },
+      ]),
+      appendIfLastEventMatches: conditional,
+    } as unknown as Journal;
+    const service = createSignedGitHubTrustedMergeService(
+      journal,
+      ticket,
+      [123],
+      async () => ({
+        id: 2,
+        issue_url: "https://api.github.com/repos/owner/repo/issues/1",
+        user: { id: 123, type: "User" },
+        created_at: evidence.authorized_at,
+        updated_at: evidence.authorized_at,
+        body: `MERGE AUTHORIZE ${ticket} ${payload.implementation_id} ${revision} ${payload.review_id}`,
+      }),
+      { get: async () => entry },
+      {
+        trusted_keys: {
+          operator: keys.publicKey.export({
+            type: "spki",
+            format: "pem",
+          }).toString(),
+        },
+      },
+      "owner/repo",
+      1,
+      2,
+      { repository: "owner/repo", issue_number: 1, allowed_human_ids: [123] },
+      {
+        fetchComment: async () => {
+          throw new Error("Independent SIP evidence unavailable");
+        },
+        fetchSipAtCommit: async () => {
+          throw new Error("Independent SIP evidence unavailable");
+        },
+        verifyAttestation: async () => undefined,
+      },
+    );
+    await expect(
+      service.authorizeMerge(ticket, "human:123", payload),
+    ).rejects.toThrow();
+    expect(conditional).not.toHaveBeenCalled();
+  });
+
   it("requires independent evidence before conditional append", async () => {
     const conditional = vi.fn(() => ({ ...state, status: "MERGE_AUTHORIZED" }));
     const journal = {
