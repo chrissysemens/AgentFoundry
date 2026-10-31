@@ -82,6 +82,29 @@ describe("read-only GitHub approval gateway", () => {
     });
   });
 
+  it("resolves each historical SIP revision from operator-trusted commit metadata", async () => {
+    const oldSha = "a".repeat(40);
+    const newSha = "b".repeat(40);
+    const get = vi.fn(async () => sip);
+    const gateway = createReadOnlyGitHubApprovalGateway(
+      get,
+      "docs/SIP.md",
+      "4",
+      { [oldSha]: "3", [newSha]: "4" },
+    );
+    await expect(gateway.fetchSipAtCommit("owner/repo", oldSha)).resolves.toMatchObject({
+      revision: "3",
+      git_sha: oldSha,
+    });
+    await expect(gateway.fetchSipAtCommit("owner/repo", newSha)).resolves.toMatchObject({
+      revision: "4",
+      git_sha: newSha,
+    });
+    await expect(
+      gateway.fetchSipAtCommit("owner/repo", "c".repeat(40)),
+    ).rejects.toThrow("Trusted SIP revision mapping required for commit");
+  });
+
   it("rejects invalid SHA, non-file responses and invalid UTF-8", async () => {
     const gateway = createReadOnlyGitHubApprovalGateway(
       async () => sip,
