@@ -1,8 +1,6 @@
 import type { AuthenticatedGitHubGet } from "./github-readonly-gateway.ts";
 import type { VerifiedMergeAuthorization } from "./merge-authorization.ts";
-import {
-  verifySignedMergeDecision,
-} from "./signed-merge-decision.ts";
+import { verifySignedMergeDecision } from "./signed-merge-decision.ts";
 import type {
   MergeDecisionTrustPolicy,
   SignedMergeDecisionStore,
