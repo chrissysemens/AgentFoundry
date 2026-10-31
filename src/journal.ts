@@ -39,6 +39,9 @@ export class MemoryJournal implements Journal {
     actor: string,
     payload: Payload = {},
   ): State {
+    if (type === "MERGE_AUTHORIZED") {
+      throw new Error("Merge authorization requires verified atomic writer");
+    }
     const e = makeEvent(ticket, type, actor, payload);
     const events = [...this.read(ticket), e];
     const s = reduceEvents(ticket, events, this.verifyApproval);
@@ -93,6 +96,9 @@ export class SQLiteJournal implements Journal {
     actor: string,
     payload: Payload = {},
   ): State {
+    if (type === "MERGE_AUTHORIZED") {
+      throw new Error("Merge authorization requires verified atomic writer");
+    }
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const e = makeEvent(ticket, type, actor, payload);
