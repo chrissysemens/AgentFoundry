@@ -31,22 +31,33 @@ function gateway(edited = false) {
       };
     }
     if (path.includes("/contents/docs/sip.md?ref=")) {
-      return { type: "file", encoding: "base64", content: Buffer.from(content).toString("base64") };
+      return {
+        type: "file",
+        encoding: "base64",
+        content: Buffer.from(content).toString("base64"),
+      };
     }
     throw new Error("Unexpected GitHub request");
   });
-  return { get, client: createReadOnlyGitHubApprovalGateway(get, "docs/sip.md", "Rev3") };
+  return {
+    get,
+    client: createReadOnlyGitHubApprovalGateway(get, "docs/sip.md", "Rev3"),
+  };
 }
 
 describe("authenticated GitHub approval capture", () => {
   it("fetches exact comment and commit before signing and retaining", async () => {
     const { get, client } = gateway();
     const createOnce = vi.fn(async () => {});
-    const signed = await captureGitHubApproval(client, policy, 42, sha, signer, { createOnce });
+    const signed = await captureGitHubApproval(client, policy, 42, sha, signer, {
+      createOnce,
+    });
     expect(signed.payload.sip_git_sha).toBe(sha);
     expect(signed.payload.sip_sha256).toBe(digest(content));
     expect(createOnce).toHaveBeenCalledOnce();
-    expect(get).toHaveBeenCalledWith(`/repos/owner/repo/contents/docs/sip.md?ref=${sha}`);
+    expect(get).toHaveBeenCalledWith(
+      `/repos/owner/repo/contents/docs/sip.md?ref=${sha}`,
+    );
   });
 
   it("fails closed for edited comments without retaining evidence", async () => {
