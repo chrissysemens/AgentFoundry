@@ -166,7 +166,13 @@ describe("approval capture", () => {
     };
     await expect(
       captureAndVerifyApprovalEvidence(
-        event, sip, policy, signer, retention, reader, trust,
+        event,
+        sip,
+        policy,
+        signer,
+        retention,
+        reader,
+        trust,
       ),
     ).resolves.toMatchObject({ key_id: "operator" });
     await expect(
