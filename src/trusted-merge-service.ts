@@ -37,3 +37,26 @@ export class TrustedMergeService {
     return this.writer.append(ticket, "MERGE_AUTHORIZED", actor, payload);
   }
 }
+
+/**
+ * Build a merge service from authenticated, signed evidence and independently
+ * verified approval replay. Run only in a process with protected journal access.
+ */
+export async function createSignedTrustedMergeService(
+  journal: Journal,
+  ticket: string,
+  allowedHumanIds: readonly number[],
+  resolveSignedDecision: MergeAuthorizationResolver,
+  replayVerifiedApprovals: (ticket: string) => Promise<State>,
+): Promise<TrustedMergeService> {
+  if (!allowedHumanIds.length) {
+    throw new Error("At least one trusted human ID required");
+  }
+  return new TrustedMergeService(
+    journal,
+    ticket,
+    allowedHumanIds,
+    resolveSignedDecision,
+    replayVerifiedApprovals,
+  );
+}
