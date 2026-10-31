@@ -91,4 +91,26 @@ describe("SQLite journal tamper resistance", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+  it("serializes conflicting appends across independent SQLite connections", () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-writers-"));
+    const path = join(directory, "events.sqlite");
+    const first = new SQLiteJournal(path);
+    const second = new SQLiteJournal(path);
+    try {
+      first.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Original",
+      });
+      expect(() =>
+        second.append("ticket", "TICKET_CREATED", "human:owner", {
+          title: "Conflicting",
+        }),
+      ).toThrow("Already created");
+      expect(first.read("ticket")).toHaveLength(1);
+      expect(second.read("ticket")).toHaveLength(1);
+    } finally {
+      second.close();
+      first.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
