@@ -54,4 +54,14 @@ describe("retained merge decision reader", () => {
       "Invalid merge decision comment ID",
     );
   });
+  it("propagates backend failures instead of treating them as missing evidence", async () => {
+    const store = createRetainedMergeDecisionStore({
+      async readRetainedObject() {
+        throw new Error("Retention backend unavailable");
+      },
+    });
+    await expect(store.get("owner/repo", 456)).rejects.toThrow(
+      "Retention backend unavailable",
+    );
+  });
 });
