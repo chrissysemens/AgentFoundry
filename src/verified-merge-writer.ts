@@ -38,6 +38,9 @@ export class VerifiedMergeAuthorizationWriter {
     if (ticket !== this.trustedTicket) {
       throw new Error("Ticket does not match trusted merge binding");
     }
+    if (type !== "MERGE_AUTHORIZED") {
+      throw new Error("Merge writer only accepts MERGE_AUTHORIZED events");
+    }
     if (this.busy) throw new Error("Concurrent merge writes forbidden");
     this.busy = true;
     try {
