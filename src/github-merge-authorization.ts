@@ -55,6 +55,7 @@ export function createGitHubMergeAuthorizationResolver(
       (author.id as number) <= 0 ||
       typeof comment.body !== "string" ||
       typeof comment.created_at !== "string" ||
+      !Number.isFinite(Date.parse(comment.created_at)) ||
       comment.updated_at !== comment.created_at
     ) {
       throw new Error("Untrusted merge comment provenance");
@@ -64,7 +65,10 @@ export function createGitHubMergeAuthorizationResolver(
       !decision ||
       decision.ticket_id !== ticket ||
       decision.human_id !== author.id ||
-      decision.authorized_at !== comment.created_at
+      decision.authorized_at !== comment.created_at ||
+      !/^[a-f0-9]{40}$/.test(decision.code_revision) ||
+      !Number.isSafeInteger(decision.human_id) ||
+      decision.human_id <= 0
     ) {
       throw new Error("Retained merge authorization mismatch");
     }
