@@ -110,16 +110,22 @@ describe("trusted merge service facade", () => {
       { get: async () => entry },
       {
         trusted_keys: {
-          operator: keys.publicKey.export({
-            type: "spki",
-            format: "pem",
-          }).toString(),
+          operator: keys.publicKey
+            .export({
+              type: "spki",
+              format: "pem",
+            })
+            .toString(),
         },
       },
       "owner/repo",
       1,
       2,
-      { repository: "owner/repo", issue_number: 1, allowed_human_ids: [123] },
+      {
+        repository: "owner/repo",
+        issue_number: 1,
+        allowed_human_ids: [123],
+      },
       {
         fetchComment: async () => {
           throw new Error("Independent SIP evidence unavailable");
