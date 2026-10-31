@@ -88,8 +88,10 @@ export function createSignedGitHubTrustedMergeService(
   approvalPolicy: GitHubApprovalPolicy,
   approvalGateway: TrustedGitHubApprovalGateway,
 ): TrustedMergeService {
-  if (approvalPolicy.repository !== repository ||
-      approvalPolicy.issue_number !== issueNumber) {
+  if (
+    approvalPolicy.repository !== repository ||
+    approvalPolicy.issue_number !== issueNumber
+  ) {
     throw new Error("Merge and SIP approval repository bindings differ");
   }
   const resolve = createSignedGitHubMergeAuthorizationResolver(
