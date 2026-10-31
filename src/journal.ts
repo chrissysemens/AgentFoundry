@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { reduceEvents } from "./domain.ts";
+import type { ApprovalEvidenceVerifier } from "./domain.ts";
 import type { Event, Payload, State } from "./domain.ts";
 
 export function makeEvent(
@@ -25,6 +26,7 @@ export interface Journal {
 }
 
 export class MemoryJournal implements Journal {
+  constructor(private readonly verifyApproval?: ApprovalEvidenceVerifier) {}
   private events = new Map<string, Event[]>();
 
   read(ticket: string): Event[] {
@@ -37,9 +39,12 @@ export class MemoryJournal implements Journal {
     actor: string,
     payload: Payload = {},
   ): State {
+    if (type === "MERGE_AUTHORIZED") {
+      throw new Error("Merge authorization requires verified atomic writer");
+    }
     const e = makeEvent(ticket, type, actor, payload);
     const events = [...this.read(ticket), e];
-    const s = reduceEvents(ticket, events);
+    const s = reduceEvents(ticket, events, this.verifyApproval);
     this.events.set(ticket, events);
 
     return s;
@@ -49,7 +54,10 @@ export class MemoryJournal implements Journal {
 export class SQLiteJournal implements Journal {
   private db: DatabaseSync;
 
-  constructor(path: string) {
+  constructor(
+    path: string,
+    private readonly verifyApproval?: ApprovalEvidenceVerifier,
+  ) {
     this.db = new DatabaseSync(path);
     this.db.exec(
       `CREATE TABLE IF NOT EXISTS events (
@@ -88,10 +96,17 @@ export class SQLiteJournal implements Journal {
     actor: string,
     payload: Payload = {},
   ): State {
+    if (type === "MERGE_AUTHORIZED") {
+      throw new Error("Merge authorization requires verified atomic writer");
+    }
     this.db.exec("BEGIN IMMEDIATE");
     try {
       const e = makeEvent(ticket, type, actor, payload);
-      const state = reduceEvents(ticket, [...this.read(ticket), e]);
+      const state = reduceEvents(
+        ticket,
+        [...this.read(ticket), e],
+        this.verifyApproval,
+      );
       this.db
         .prepare(
           "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",
@@ -99,6 +114,50 @@ export class SQLiteJournal implements Journal {
         .run(e.event_id, ticket, JSON.stringify(e));
       this.db.exec("COMMIT");
 
+      return state;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  /**
+   * Compare the last observed journal event inside the same SQLite write
+   * transaction that commits the authorization. A competing connection cannot
+   * change the journal between this check and the insert.
+   *
+   * The caller must independently authenticate the decision and replay state
+   * before calling. This is a stale-state guard, not evidence authentication.
+   */
+  appendIfLastEventMatches(
+    ticket: string,
+    expectedEventId: string,
+    type: string,
+    actor: string,
+    payload: Payload = {},
+  ): State {
+    if (type !== "MERGE_AUTHORIZED") {
+      throw new Error("Conditional append only accepts merge authorization");
+    }
+    if (!expectedEventId) throw new Error("Expected event ID required");
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const history = this.read(ticket);
+      if (history.at(-1)?.event_id !== expectedEventId) {
+        throw new Error("Journal changed since authorization verification");
+      }
+      const event = makeEvent(ticket, type, actor, payload);
+      const state = reduceEvents(
+        ticket,
+        [...history, event],
+        this.verifyApproval,
+      );
+      this.db
+        .prepare(
+          "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",
+        )
+        .run(event.event_id, ticket, JSON.stringify(event));
+      this.db.exec("COMMIT");
       return state;
     } catch (error) {
       this.db.exec("ROLLBACK");

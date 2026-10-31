@@ -1,8 +1,18 @@
+import {
+  fixtureGitSha,
+  fixtureHuman,
+  fixtureReceipt,
+  fixtureVerifier,
+} from "./approval-fixture.ts";
 import { describe, expect, it } from "vitest";
 
 import { digest, FakeOracle, reduceEvents } from "../src/domain.ts";
-import type { OracleRequest, Review } from "../src/domain.ts";
-import { MemoryJournal, SQLiteJournal } from "../src/journal.ts";
+import type {
+  ApprovalEvidenceVerifier,
+  OracleRequest,
+  Review,
+} from "../src/domain.ts";
+import { MemoryJournal, SQLiteJournal, makeEvent } from "../src/journal.ts";
 import type { Journal } from "../src/journal.ts";
 
 function setup(journal: Journal) {
@@ -18,7 +28,11 @@ function setup(journal: Journal) {
   append("TICKET_CREATED", "human:owner", { title: "Oracle" });
   append("GRILL_STARTED");
   append("SIP_PROPOSED", "agent:planner", { revision: "2", sha256: sipHash });
-  append("SIP_APPROVED", "human:owner", { revision: "2", sha256: sipHash });
+  append("SIP_APPROVED", "human:owner", {
+    revision: "2",
+    sha256: sipHash,
+    receipt: fixtureReceipt,
+  });
   append("IMPLEMENTATION_STARTED", "agent:dev", {
     revision: "2",
     sha256: sipHash,
@@ -80,12 +94,54 @@ function review(
 }
 
 const adapters = [
-  { name: "memory", create: () => new MemoryJournal() },
-  { name: "sqlite", create: () => new SQLiteJournal(":memory:") },
+  { name: "memory", create: () => new MemoryJournal(fixtureVerifier) },
+  {
+    name: "sqlite",
+    create: () => new SQLiteJournal(":memory:", fixtureVerifier),
+  },
 ];
 
 for (const adapter of adapters) {
   describe(adapter.name, () => {
+    it("fails closed when approval evidence is unavailable or forged", () => {
+      const journal = adapter.create();
+      journal.append("approval-test", "TICKET_CREATED", "human:owner", {
+        title: "Approval test",
+      });
+      journal.append("approval-test", "GRILL_STARTED", "agent:planner");
+      journal.append("approval-test", "SIP_PROPOSED", "agent:planner", {
+        revision: "2",
+        sha256: digest("approved SIP"),
+      });
+      const base = { revision: "2", sha256: digest("approved SIP") };
+      expect(() =>
+        journal.append("approval-test", "SIP_APPROVED", "human:owner", base),
+      ).toThrow("receipt required");
+      expect(() =>
+        journal.append("approval-test", "SIP_APPROVED", "human:owner", {
+          ...base,
+          receipt: { ...fixtureReceipt, source_event_id: "forged" },
+        }),
+      ).toThrow("evidence unavailable");
+      expect(() =>
+        journal.append("approval-test", "SIP_APPROVED", "human:owner", {
+          ...base,
+          receipt: { ...fixtureReceipt, sip_git_sha: "b".repeat(40) },
+        }),
+      ).toThrow("Git SHA mismatch");
+      const state = journal.append(
+        "approval-test",
+        "SIP_APPROVED",
+        "human:owner",
+        {
+          ...base,
+          receipt: fixtureReceipt,
+        },
+      );
+      expect(state.approved_git_sha).toBe(fixtureReceipt.sip_git_sha);
+      expect(state.approval_receipt).toEqual(fixtureReceipt);
+    });
+
     it("requires approval and the exact SIP identity", () => {
       const journal = adapter.create();
       journal.append("x", "TICKET_CREATED", "human:owner", { title: "x" });
@@ -117,7 +173,7 @@ for (const adapter of adapters) {
         });
       }
       const events = journal.read(ticketId);
-      const state = reduceEvents(ticketId, events);
+      const state = reduceEvents(ticketId, events, fixtureVerifier);
       expect(events).toHaveLength(16);
       expect(state.status).toBe("ESCALATED");
       expect(state.repair_count).toBe(3);
@@ -134,7 +190,11 @@ for (const adapter of adapters) {
       append("ORACLE_REVIEWED", "oracle:independent", {
         review: review(sipHash, "code0", 0, "INCONCLUSIVE"),
       });
-      const state = reduceEvents(ticketId, journal.read(ticketId));
+      const state = reduceEvents(
+        ticketId,
+        journal.read(ticketId),
+        fixtureVerifier,
+      );
       expect(state.repair_count).toBe(0);
       expect(state.status).toBe("ESCALATED");
     });
@@ -196,10 +256,26 @@ for (const adapter of adapters) {
           code_revision: "stale",
         }),
       ).toThrow();
-      append("MERGE_AUTHORIZED", "human:owner", payload);
-      expect(reduceEvents(ticketId, journal.read(ticketId)).status).toBe(
-        "MERGE_AUTHORIZED",
-      );
+      const events = journal.read(ticketId);
+      if (journal instanceof SQLiteJournal) {
+        const observed = events.at(-1)?.event_id;
+        if (!observed) throw new Error("Missing merge snapshot");
+        journal.appendIfLastEventMatches(
+          ticketId,
+          observed,
+          "MERGE_AUTHORIZED",
+          "human:owner",
+          payload,
+        );
+      } else {
+        events.push(
+          makeEvent(ticketId, "MERGE_AUTHORIZED", "human:owner", payload),
+        );
+      }
+      const finalEvents =
+        journal instanceof SQLiteJournal ? journal.read(ticketId) : events;
+      const finalState = reduceEvents(ticketId, finalEvents, fixtureVerifier);
+      expect(finalState.status).toBe("MERGE_AUTHORIZED");
     });
 
     it("keeps advisory proposals inert until human approval", () => {
@@ -216,11 +292,13 @@ for (const adapter of adapters) {
         }),
       ).toThrow();
       expect(
-        reduceEvents(ticketId, journal.read(ticketId)).proposals.abc?.status,
+        reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier)
+          .proposals.abc?.status,
       ).toBe("PROPOSED");
       append("ADVISORY_APPROVED", "human:owner", { fingerprint: "abc" });
       expect(
-        reduceEvents(ticketId, journal.read(ticketId)).proposals.abc?.status,
+        reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier)
+          .proposals.abc?.status,
       ).toBe("APPROVED_FOR_BACKLOG");
     });
 
@@ -255,9 +333,9 @@ for (const adapter of adapters) {
       const journal = adapter.create();
       const { ticketId } = setup(journal);
       const events = journal.read(ticketId);
-      expect(reduceEvents(ticketId, structuredClone(events))).toEqual(
-        reduceEvents(ticketId, events),
-      );
+      expect(
+        reduceEvents(ticketId, structuredClone(events), fixtureVerifier),
+      ).toEqual(reduceEvents(ticketId, events, fixtureVerifier));
     });
   });
 }
@@ -276,5 +354,47 @@ it("does not expose developer private reasoning through the Oracle request", asy
   };
   expect((await new FakeOracle([result]).review(request)).verdict).toBe(
     "ACCEPT",
+  );
+});
+
+it("compares approval timestamps chronologically across fractional precision", () => {
+  const journal = new MemoryJournal(fixtureVerifier);
+  const ticketId = "precision-test";
+  journal.append(ticketId, "TICKET_CREATED", "human:owner", {
+    title: "Timestamp precision",
+  });
+  journal.append(ticketId, "GRILL_STARTED", "agent:planner");
+  journal.append(ticketId, "SIP_PROPOSED", "agent:planner", {
+    revision: "2",
+    sha256: digest("approved SIP"),
+  });
+  journal.append(ticketId, "SIP_APPROVED", "human:owner", {
+    revision: "2",
+    sha256: digest("approved SIP"),
+    receipt: fixtureReceipt,
+  });
+  const events = journal.read(ticketId);
+  const approval = events.find((event) => event.event_type === "SIP_APPROVED");
+  if (!approval) throw new Error("Approval event missing");
+  approval.timestamp = "2020-01-01T00:00:00.500Z";
+  approval.payload.receipt = {
+    ...fixtureReceipt,
+    approved_at: "2020-01-01T00:00:00Z",
+  };
+  const verifier: ApprovalEvidenceVerifier = () => ({
+    sip: {
+      revision: "2",
+      git_sha: fixtureGitSha,
+      utf8_content: "approved SIP",
+    },
+    human: {
+      ...fixtureHuman,
+      approved_at: "2020-01-01T00:00:00Z",
+    },
+  });
+  expect(reduceEvents(ticketId, events, verifier).status).toBe("APPROVED");
+  approval.timestamp = "2019-12-31T23:59:59.999Z";
+  expect(() => reduceEvents(ticketId, events, verifier)).toThrow(
+    "Approval cannot precede its source event",
   );
 });
