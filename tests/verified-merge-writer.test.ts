@@ -27,7 +27,7 @@ const payload = {
 };
 
 function setup(
-  decision: typeof evidence | undefined = evidence,
+  decision: typeof evidence | undefined,
   current: State = state,
 ) {
   const append = vi.fn(() => ({ ...current, status: "MERGE_AUTHORIZED" }));
@@ -46,7 +46,7 @@ function setup(
 
 describe("verified merge journal boundary", () => {
   it("writes only after independent evidence and verified replay", async () => {
-    const { writer, append, resolve, verifiedState } = setup();
+    const { writer, append, resolve, verifiedState } = setup(evidence);
     await writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload);
     expect(verifiedState).toHaveBeenCalledWith(ticket);
     expect(resolve).toHaveBeenCalledWith(ticket);
@@ -61,10 +61,7 @@ describe("verified merge journal boundary", () => {
       { current: { ...state, status: "REWORK" } },
     ];
     for (const scenario of cases) {
-      const { writer, append } = setup(
-        scenario.decision,
-        scenario.current,
-      );
+      const { writer, append } = setup(scenario.decision ?? evidence, scenario.current);
       await expect(
         writer.append(
           ticket,
@@ -79,6 +76,9 @@ describe("verified merge journal boundary", () => {
 
   it("rejects missing evidence and cross-ticket writes", async () => {
     const { writer, append } = setup(undefined);
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow();
     await expect(
       writer.append("OTHER", "MERGE_AUTHORIZED", "human:123", payload),
     ).rejects.toThrow();
