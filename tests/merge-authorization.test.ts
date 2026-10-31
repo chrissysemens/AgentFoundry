@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { State } from "../src/domain.ts";
-import {
-  validateMergeAuthorization,
-} from "../src/merge-authorization.ts";
+import { validateMergeAuthorization } from "../src/merge-authorization.ts";
 
 const state = {
   ticket_id: "FOUND-002",
@@ -22,7 +20,9 @@ const evidence = {
 
 describe("separate merge authorization gate", () => {
   it("accepts matching independently verified human evidence", () => {
-    expect(() => validateMergeAuthorization(state, evidence, [123])).not.toThrow();
+    expect(() =>
+      validateMergeAuthorization(state, evidence, [123]),
+    ).not.toThrow();
   });
 
   it("fails closed without evidence or with an unauthorized human", () => {
