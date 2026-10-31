@@ -1,9 +1,11 @@
 import { generateKeyPairSync, sign } from "node:crypto";
+import { verifySignedApprovalAttestation } from "../src/signed-approval-attestation.ts";
+import type { SignedApprovalAttestation } from "../src/signed-approval-attestation.ts";
 import { describe, expect, it, vi } from "vitest";
 import { captureApprovalEvidence } from "../src/approval-capture.ts";
 import { digest } from "../src/domain.ts";
 
-const { privateKey } = generateKeyPairSync("ed25519");
+const { privateKey, publicKey } = generateKeyPairSync("ed25519");
 const sha = "a".repeat(40);
 const sip = { revision: "3", git_sha: sha, utf8_content: "# Approved SIP\n" };
 const time = "2026-10-30T00:00:00.000Z";
@@ -66,6 +68,44 @@ describe("approval capture", () => {
       ),
     ).rejects.toThrow("Approval capture source is not trusted");
     expect(createOnce).not.toHaveBeenCalled();
+  });
+
+  it("round-trips a signed approval through retained evidence verification", async () => {
+    const retained = new Map<string, SignedApprovalAttestation>();
+    const createOnce = async (
+      repository: string,
+      commentId: number,
+      signed: SignedApprovalAttestation,
+    ) => {
+      const key = `${repository}/${commentId}`;
+      if (retained.has(key)) throw new Error("Duplicate approval evidence");
+      retained.set(key, signed);
+    };
+    const signed = await captureApprovalEvidence(event, sip, policy, signer, {
+      createOnce,
+    });
+    const store = {
+      get: async (repository: string, commentId: number) =>
+        retained.get(`${repository}/${commentId}`),
+    };
+    const trust = {
+      trusted_keys: {
+        operator: publicKey.export({ type: "spki", format: "pem" }).toString(),
+      },
+    };
+    await expect(
+      verifySignedApprovalAttestation(store, trust, "owner/repo", 456),
+    ).resolves.toEqual(signed.payload);
+    await expect(
+      createOnce("owner/repo", 456, signed),
+    ).rejects.toThrow("Duplicate approval evidence");
+    retained.set("owner/repo/456", {
+      ...signed,
+      payload: { ...signed.payload, sip_revision: "forged" },
+    });
+    await expect(
+      verifySignedApprovalAttestation(store, trust, "owner/repo", 456),
+    ).rejects.toThrow("Invalid approval attestation signature");
   });
 
   it("propagates write-once storage failures", async () => {
