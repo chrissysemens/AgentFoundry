@@ -111,6 +111,37 @@ describe("signed approval to journal integration", () => {
     expect(read()).toHaveLength(4);
   });
 
+  it("rejects cross-ticket reuse of a valid signed approval", async () => {
+    const { writer, read } = buildWriter();
+    await writer.append("ticket", "TICKET_CREATED", "human:owner", {
+      title: "Original approved ticket",
+    });
+    await writer.append("ticket", "GRILL_STARTED", "agent:planner");
+    await writer.append("ticket", "SIP_PROPOSED", "agent:planner", {
+      revision: "3",
+      sha256: payload.sip_sha256,
+    });
+    await writer.append("ticket", "SIP_APPROVED", "human:owner", {
+      revision: "3",
+      sha256: payload.sip_sha256,
+      receipt,
+    });
+    expect(read()).toHaveLength(4);
+    await expect(
+      writer.append("other-ticket", "SIP_APPROVED", "human:owner", {
+        revision: "3",
+        sha256: payload.sip_sha256,
+        receipt,
+      }),
+    ).rejects.toThrow("Ticket does not match trusted approval binding");
+    await expect(
+      writer.append("other-ticket", "TICKET_CREATED", "human:owner", {
+        title: "Unauthorized second ticket",
+      }),
+    ).rejects.toThrow("Ticket does not match trusted approval binding");
+    expect(read()).toHaveLength(4);
+  });
+
   it("rejects tampered signed evidence without recording approval", async () => {
     const { writer, read } = buildWriter(true);
     await writer.append("ticket", "TICKET_CREATED", "human:owner", {
