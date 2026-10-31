@@ -113,4 +113,28 @@ describe("SQLite journal tamper resistance", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+  it("fails closed when another connection holds the write transaction", () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-lock-"));
+    const path = join(directory, "events.sqlite");
+    const journal = new SQLiteJournal(path);
+    const external = new DatabaseSync(path);
+    try {
+      external.exec("BEGIN IMMEDIATE");
+      expect(() =>
+        journal.append("ticket", "TICKET_CREATED", "human:owner", {
+          title: "Blocked",
+        }),
+      ).toThrow();
+      expect(journal.read("ticket")).toHaveLength(0);
+      external.exec("ROLLBACK");
+      journal.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "After rollback",
+      });
+      expect(journal.read("ticket")).toHaveLength(1);
+    } finally {
+      external.close();
+      journal.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
