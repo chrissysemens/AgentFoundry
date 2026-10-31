@@ -8,11 +8,13 @@ import type { SignedApprovalAttestation } from "./signed-approval-attestation.ts
  * The requested SIP commit is operator-trusted input, not parsed from a comment.
  * The gateway must authenticate GitHub and retrieve exact-commit SIP bytes.
  */
+type ApprovalCaptureGateway = Pick<
+  TrustedGitHubApprovalGateway,
+  "fetchComment" | "fetchSipAtCommit"
+>;
+
 export async function captureGitHubApproval(
-  gateway: Pick<
-    TrustedGitHubApprovalGateway,
-    "fetchComment" | "fetchSipAtCommit"
-  >,
+  gateway: ApprovalCaptureGateway,
   policy: GitHubApprovalPolicy,
   commentId: number,
   trustedSipGitSha: string,
