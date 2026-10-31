@@ -53,7 +53,9 @@ export class VerifiedMergeAuthorizationWriter {
         if (this.requireAtomicAppend) {
           observedEventId = state.history?.at(-1)?.event_id;
           if (!observedEventId) {
-            throw new Error("Verified journal snapshot required for atomic merge");
+            throw new Error(
+              "Verified journal snapshot required for atomic merge",
+            );
           }
         }
         const evidence = await this.resolve(ticket);
@@ -77,7 +79,14 @@ export class VerifiedMergeAuthorizationWriter {
         if (typeof conditional !== "function") {
           throw new Error("Atomic merge journal unavailable");
         }
-        return conditional.call(this.journal, ticket, observedEventId, type, actor, payload);
+        return conditional.call(
+          this.journal,
+          ticket,
+          observedEventId,
+          type,
+          actor,
+          payload,
+        );
       }
       return this.journal.append(ticket, type, actor, payload);
     } finally {
