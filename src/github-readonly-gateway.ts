@@ -118,7 +118,11 @@ export function createReadOnlyGitHubApprovalGateway(
       ) {
         throw new Error("Trusted SIP revision mapping required for commit");
       }
-      return { revision: resolvedRevision, git_sha: gitSha, utf8_content: utf8 };
+      return {
+        revision: resolvedRevision,
+        git_sha: gitSha,
+        utf8_content: utf8,
+      };
     },
     async verifyAttestation() {
       // Fail closed until a separate, authenticated immutable store is wired.

@@ -92,11 +92,15 @@ describe("read-only GitHub approval gateway", () => {
       "4",
       { [oldSha]: "3", [newSha]: "4" },
     );
-    await expect(gateway.fetchSipAtCommit("owner/repo", oldSha)).resolves.toMatchObject({
+    await expect(
+      gateway.fetchSipAtCommit("owner/repo", oldSha),
+    ).resolves.toMatchObject({
       revision: "3",
       git_sha: oldSha,
     });
-    await expect(gateway.fetchSipAtCommit("owner/repo", newSha)).resolves.toMatchObject({
+    await expect(
+      gateway.fetchSipAtCommit("owner/repo", newSha),
+    ).resolves.toMatchObject({
       revision: "4",
       git_sha: newSha,
     });
