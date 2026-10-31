@@ -141,7 +141,9 @@ describe("GitHub approval evidence matching", () => {
 
 describe("approval capture source validation", () => {
   it("accepts independently authenticated matching source metadata", () => {
-    expect(() => validateApprovalCaptureSource(event, attestation, policy)).not.toThrow();
+    expect(() =>
+      validateApprovalCaptureSource(event, attestation, policy),
+    ).not.toThrow();
   });
 
   it("rejects edited comments and unauthorized actors before signing", () => {
