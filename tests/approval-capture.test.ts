@@ -96,9 +96,9 @@ describe("approval capture", () => {
     await expect(
       verifySignedApprovalAttestation(store, trust, "owner/repo", 456),
     ).resolves.toEqual(signed.payload);
-    await expect(
-      createOnce("owner/repo", 456, signed),
-    ).rejects.toThrow("Duplicate approval evidence");
+    await expect(createOnce("owner/repo", 456, signed)).rejects.toThrow(
+      "Duplicate approval evidence",
+    );
     retained.set("owner/repo/456", {
       ...signed,
       payload: { ...signed.payload, sip_revision: "forged" },
