@@ -25,6 +25,7 @@ export class VerifiedMergeAuthorizationWriter {
     private readonly allowedHumanIds: readonly number[],
     private readonly resolve: MergeAuthorizationResolver,
     private readonly verifiedState: (ticket: string) => Promise<State>,
+    private readonly requireAtomicAppend = false,
   ) {
     if (!trustedTicket.trim()) throw new Error("Trusted ticket ID required");
   }
@@ -44,10 +45,17 @@ export class VerifiedMergeAuthorizationWriter {
     if (this.busy) throw new Error("Concurrent merge writes forbidden");
     this.busy = true;
     try {
+      let observedEventId: string | undefined;
       if (type === "MERGE_AUTHORIZED") {
         // The state loader must replay historical SIP approvals with their
         // independently verified evidence; raw replay would fail closed.
         const state = await this.verifiedState(ticket);
+        if (this.requireAtomicAppend) {
+          observedEventId = state.history?.at(-1)?.event_id;
+          if (!observedEventId) {
+            throw new Error("Verified journal snapshot required for atomic merge");
+          }
+        }
         const evidence = await this.resolve(ticket);
         validateMergeAuthorization(state, evidence, this.allowedHumanIds);
         if (actor !== `human:${evidence!.human_id}`) {
@@ -60,6 +68,16 @@ export class VerifiedMergeAuthorizationWriter {
         ) {
           throw new Error("Merge payload does not match verified decision");
         }
+      }
+      if (this.requireAtomicAppend) {
+        if (!observedEventId || !("appendIfLastEventMatches" in this.journal)) {
+          throw new Error("Atomic merge journal unavailable");
+        }
+        const conditional = this.journal.appendIfLastEventMatches;
+        if (typeof conditional !== "function") {
+          throw new Error("Atomic merge journal unavailable");
+        }
+        return conditional.call(this.journal, ticket, observedEventId, type, actor, payload);
       }
       return this.journal.append(ticket, type, actor, payload);
     } finally {
