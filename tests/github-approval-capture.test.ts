@@ -49,9 +49,14 @@ describe("authenticated GitHub approval capture", () => {
   it("fetches exact comment and commit before signing and retaining", async () => {
     const { get, client } = gateway();
     const createOnce = vi.fn(async () => {});
-    const signed = await captureGitHubApproval(client, policy, 42, sha, signer, {
-      createOnce,
-    });
+    const signed = await captureGitHubApproval(
+      client,
+      policy,
+      42,
+      sha,
+      signer,
+      { createOnce },
+    );
     expect(signed.payload.sip_git_sha).toBe(sha);
     expect(signed.payload.sip_sha256).toBe(digest(content));
     expect(createOnce).toHaveBeenCalledOnce();
