@@ -61,6 +61,32 @@ describe("trusted merge service facade", () => {
       ),
     ).toThrow("Merge and SIP approval repository bindings differ");
   });
+  it("rejects merge human IDs absent from the SIP approval policy", () => {
+    const journal = { read: vi.fn(() => []) } as unknown as Journal;
+    const gateway = {} as Parameters<
+      typeof createSignedGitHubTrustedMergeService
+    >[10];
+    expect(() =>
+      createSignedGitHubTrustedMergeService(
+        journal,
+        ticket,
+        [123],
+        async () => ({}),
+        { get: async () => undefined },
+        { trusted_keys: {} },
+        "owner/repo",
+        1,
+        2,
+        {
+          repository: "owner/repo",
+          issue_number: 1,
+          allowed_human_ids: [999],
+        },
+        gateway,
+      ),
+    ).toThrow("Merge human allowlist exceeds SIP approval policy");
+  });
+
   it("rejects a signed decision when independent SIP replay cannot verify approval", async () => {
     const keys = generateKeyPairSync("ed25519");
     const signedPayload = {
