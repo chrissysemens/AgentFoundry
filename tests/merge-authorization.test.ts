@@ -20,13 +20,14 @@ const evidence = {
 
 const check = (
   current: State = state,
-  approval: typeof evidence | undefined = evidence,
+  approval: typeof evidence | undefined,
+
   humans: number[] = [123],
 ) => validateMergeAuthorization(current, approval, humans);
 
 describe("separate merge authorization gate", () => {
   it("accepts matching independently verified human evidence", () => {
-    expect(() => check()).not.toThrow();
+    expect(() => check(state, evidence)).not.toThrow();
   });
 
   it("fails closed without evidence or with an unauthorized human", () => {
@@ -42,6 +43,6 @@ describe("separate merge authorization gate", () => {
     ]) {
       expect(() => check(state, { ...evidence, ...changed })).toThrow();
     }
-    expect(() => check({ ...state, status: "REWORK" })).toThrow();
+    expect(() => check({ ...state, status: "REWORK" }, evidence)).toThrow();
   });
 });
