@@ -193,4 +193,26 @@ describe("SQLite journal tamper resistance", () => {
       rmSync(directory, { recursive: true, force: true });
     }
   });
+  it("rejects direct merge authorization through both SQLite connections", () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-merge-bypass-"));
+    const path = join(directory, "events.sqlite");
+    const first = new SQLiteJournal(path);
+    const second = new SQLiteJournal(path);
+    try {
+      first.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Protected merge",
+      });
+      for (const journal of [first, second]) {
+        expect(() =>
+          journal.append("ticket", "MERGE_AUTHORIZED", "human:123"),
+        ).toThrow("Merge authorization requires verified atomic writer");
+      }
+      expect(first.read("ticket")).toHaveLength(1);
+      expect(second.read("ticket")).toHaveLength(1);
+    } finally {
+      second.close();
+      first.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 });
