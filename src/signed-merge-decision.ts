@@ -58,6 +58,25 @@ export async function verifySignedMergeDecision(
     throw new Error("Malformed signed merge decision payload");
   }
   const a = p as Record<string, unknown>;
+  const exactKeys = (value: Record<string, unknown>, keys: string[]) =>
+    Object.keys(value).length === keys.length &&
+    keys.every((key) => Object.hasOwn(value, key));
+  if (
+    !exactKeys(entry, ["payload", "key_id", "signature_base64"]) ||
+    !exactKeys(a, [
+      "repository",
+      "issue_number",
+      "comment_id",
+      "ticket_id",
+      "implementation_id",
+      "code_revision",
+      "review_id",
+      "human_id",
+      "authorized_at",
+    ])
+  ) {
+    throw new Error("Unexpected signed merge decision fields");
+  }
   if (
     a.repository !== repository ||
     a.issue_number !== issueNumber ||
