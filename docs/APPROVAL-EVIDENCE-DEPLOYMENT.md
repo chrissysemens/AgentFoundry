@@ -64,3 +64,46 @@ authenticated. This approval evidence path does not authorize merges.
 
 Until these gates are met, this is a tested security foundation, not a
 production-ready autonomous approval workflow.
+
+## Separate merge-authorization deployment gate
+
+The merge authorization path is distinct from SIP approval. The
+`createGitHubMergeAuthorizationResolver` adapter checks an authenticated GitHub
+comment against a `RetainedMergeDecisionReader`, and
+`VerifiedMergeAuthorizationWriter` checks the decision against independently
+replayed ACCEPTED state. Neither adapter establishes that the retained decision
+was genuinely authorized, unmodified, or non-revoked. Do not configure a plain
+JSON file, caller-provided callback, or repository content as the trusted
+decision source.
+
+Before production use, an independent capture service must:
+
+- Authenticate the GitHub comment and its numeric human author, reject edits,
+  and bind the exact repository, issue, comment ID, and timestamp.
+- Require a distinct, explicit merge instruction naming the ticket,
+  implementation, full accepted commit SHA, and Oracle review ID.
+- Retain the complete decision in a separately administered create-only store;
+  enforce immutable retention and read-back independently of the agent.
+- Cryptographically authenticate the retained record with an operator-held
+  signing key and verify it with a separately configured trusted public key.
+  Bind the repository and comment ID in the signed bytes to prevent replay.
+- Support revocation and signing-key rotation under operator control; fail
+  closed when status cannot be established.
+- Recheck the current independently verified ACCEPTED state immediately before
+  writing. The journal and state verification must share a transactional
+  consistency boundary, or the deployment must otherwise prevent concurrent
+  external writes and stale-state authorization.
+- Keep the underlying journal inaccessible to untrusted callers. In-process
+  writer locking alone does not prevent cross-process races.
+
+Acceptance tests must cover signature tampering, unknown and revoked keys,
+cross-repository/comment replay, edited comments, mismatched human identities,
+stale accepted revisions, revoked decisions, concurrent requests, and failed
+storage/identity lookups. A test-only reader is not a production trust source.
+
+**Current status:** The GitHub comment adapter and journal gate exist, with
+regression tests for edited/forged comments and writer concurrency. An
+authenticated retained-decision verifier, protected deployment, and
+transactional cross-process authorization are **not implemented**. No
+`MERGE_AUTHORIZED` event should be treated as production-authorized until
+these requirements are met.
