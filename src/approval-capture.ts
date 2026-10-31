@@ -8,6 +8,11 @@ import type {
 import type { VerifiedSipContent } from "./sip-approval.ts";
 import { approvalAttestationSigningBytes } from "./signed-approval-attestation.ts";
 import type { SignedApprovalAttestation } from "./signed-approval-attestation.ts";
+import { verifySignedApprovalAttestation } from "./signed-approval-attestation.ts";
+import type {
+  AttestationTrustPolicy,
+  ImmutableApprovalAttestationStore,
+} from "./signed-approval-attestation.ts";
 import type {
   ApprovalRetentionWriter,
   ApprovalSigner,
@@ -48,5 +53,40 @@ export async function captureApprovalEvidence(
     signature_base64: signature.toString("base64"),
   };
   await retention.createOnce(event.repository, event.comment_id, signed);
+  return signed;
+}
+
+/**
+ * Require independent verification of the retained record before reporting
+ * capture success. The reader and trust keys must be operator-controlled.
+ */
+export async function captureAndVerifyApprovalEvidence(
+  event: GitHubApprovalEvent,
+  sip: VerifiedSipContent,
+  policy: GitHubApprovalPolicy,
+  signer: ApprovalSigner,
+  retention: ApprovalRetentionWriter,
+  reader: ImmutableApprovalAttestationStore,
+  trust: AttestationTrustPolicy,
+): Promise<SignedApprovalAttestation> {
+  const signed = await captureApprovalEvidence(
+    event,
+    sip,
+    policy,
+    signer,
+    retention,
+  );
+  const verified = await verifySignedApprovalAttestation(
+    reader,
+    trust,
+    event.repository,
+    event.comment_id,
+  );
+  if (
+    !verified ||
+    JSON.stringify(verified) !== JSON.stringify(signed.payload)
+  ) {
+    throw new Error("Retained approval verification mismatch");
+  }
   return signed;
 }
