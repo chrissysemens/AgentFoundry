@@ -20,9 +20,8 @@ const evidence = {
 
 describe("separate merge authorization gate", () => {
   it("accepts matching independently verified human evidence", () => {
-    expect(() =>
-      validateMergeAuthorization(state, evidence, [123]),
-    ).not.toThrow();
+    const authorize = () => validateMergeAuthorization(state, evidence, [123]);
+    expect(authorize).not.toThrow();
   });
 
   it("fails closed without evidence or with an unauthorized human", () => {
