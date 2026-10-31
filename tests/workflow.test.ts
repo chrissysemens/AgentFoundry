@@ -268,14 +268,17 @@ for (const adapter of adapters) {
         );
       } else {
         const events = journal.read(ticketId);
-        events.push(makeEvent(ticketId, "MERGE_AUTHORIZED", "human:owner", payload));
+        events.push(
+          makeEvent(ticketId, "MERGE_AUTHORIZED", "human:owner", payload),
+        );
         expect(reduceEvents(ticketId, events, fixtureVerifier).status).toBe(
           "MERGE_AUTHORIZED",
         );
       }
       if (journal instanceof SQLiteJournal) {
         expect(
-          reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier).status,
+          reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier)
+            .status,
         ).toBe("MERGE_AUTHORIZED");
       }
     });
