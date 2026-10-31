@@ -42,13 +42,13 @@ export class TrustedMergeService {
  * Build a merge service from authenticated, signed evidence and independently
  * verified approval replay. Run only in a process with protected journal access.
  */
-export async function createSignedTrustedMergeService(
+export function createTrustedMergeService(
   journal: Journal,
   ticket: string,
   allowedHumanIds: readonly number[],
   resolveSignedDecision: MergeAuthorizationResolver,
   replayVerifiedApprovals: (ticket: string) => Promise<State>,
-): Promise<TrustedMergeService> {
+): TrustedMergeService {
   if (!allowedHumanIds.length) {
     throw new Error("At least one trusted human ID required");
   }
