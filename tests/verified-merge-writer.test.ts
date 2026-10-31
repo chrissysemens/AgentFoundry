@@ -343,4 +343,32 @@ describe("verified merge journal boundary", () => {
     ).rejects.toThrow("Verified journal snapshot required for atomic merge");
     expect(ordinary).not.toHaveBeenCalled();
   });
+  it("propagates a stale-snapshot rejection without falling back to append", async () => {
+    const snapshot = {
+      ...state,
+      history: [{ event_id: "snapshot-1" }],
+    } as State;
+    const ordinary = vi.fn(() => state);
+    const conditional = vi.fn((): State => {
+      throw new Error("Journal changed since authorization verification");
+    });
+    const journal = {
+      append: ordinary,
+      read: vi.fn(() => []),
+      appendIfLastEventMatches: conditional,
+    } as unknown as Journal;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      async () => evidence,
+      async () => snapshot,
+      true,
+    );
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow("Journal changed since authorization verification");
+    expect(conditional).toHaveBeenCalledOnce();
+    expect(ordinary).not.toHaveBeenCalled();
+  });
 });
