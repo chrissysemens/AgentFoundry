@@ -197,6 +197,46 @@ describe("verified merge journal boundary", () => {
     expect(append).toHaveBeenCalledOnce();
   });
 
+  it("rejects malformed retained merge decisions before writing", async () => {
+    const comment = {
+      id: 456,
+      issue_url: "https://api.github.com/repos/owner/repo/issues/7",
+      user: { id: 123, type: "User" },
+      created_at: evidence.authorized_at,
+      updated_at: evidence.authorized_at,
+      body: `MERGE AUTHORIZE ${ticket} impl-1 ${revision} review-1`,
+    };
+    for (const changed of [
+      { ticket_id: "OTHER" },
+      { human_id: 999 },
+      { code_revision: "invalid" },
+      { authorized_at: "2026-10-30T12:00:00.000Z" },
+    ]) {
+      const get = vi.fn(async () => comment);
+      const reader = { get: vi.fn(async () => ({ ...evidence, ...changed })) };
+      const resolve = createGitHubMergeAuthorizationResolver(
+        get,
+        reader,
+        "owner/repo",
+        7,
+        456,
+      );
+      const append = vi.fn(() => state);
+      const journal = { append, read: vi.fn(() => []) } as unknown as Journal;
+      const writer = new VerifiedMergeAuthorizationWriter(
+        journal,
+        ticket,
+        [123],
+        resolve,
+        async () => state,
+      );
+      await expect(
+        writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+      ).rejects.toThrow();
+      expect(append).not.toHaveBeenCalled();
+    }
+  });
+
   it("does not append when independent verification fails", async () => {
     const { writer, append, verifiedState } = setup(evidence);
     verifiedState.mockRejectedValueOnce(new Error("Untrusted SIP history"));
