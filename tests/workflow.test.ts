@@ -256,8 +256,9 @@ for (const adapter of adapters) {
           code_revision: "stale",
         }),
       ).toThrow();
+      const events = journal.read(ticketId);
       if (journal instanceof SQLiteJournal) {
-        const observed = journal.read(ticketId).at(-1)?.event_id;
+        const observed = events.at(-1)?.event_id;
         if (!observed) throw new Error("Missing merge snapshot");
         journal.appendIfLastEventMatches(
           ticketId,
@@ -267,20 +268,14 @@ for (const adapter of adapters) {
           payload,
         );
       } else {
-        const events = journal.read(ticketId);
         events.push(
           makeEvent(ticketId, "MERGE_AUTHORIZED", "human:owner", payload),
         );
-        expect(reduceEvents(ticketId, events, fixtureVerifier).status).toBe(
-          "MERGE_AUTHORIZED",
-        );
       }
-      if (journal instanceof SQLiteJournal) {
-        expect(
-          reduceEvents(ticketId, journal.read(ticketId), fixtureVerifier)
-            .status,
-        ).toBe("MERGE_AUTHORIZED");
-      }
+      const finalEvents =
+        journal instanceof SQLiteJournal ? journal.read(ticketId) : events;
+      const finalState = reduceEvents(ticketId, finalEvents, fixtureVerifier);
+      expect(finalState.status).toBe("MERGE_AUTHORIZED");
     });
 
     it("keeps advisory proposals inert until human approval", () => {
