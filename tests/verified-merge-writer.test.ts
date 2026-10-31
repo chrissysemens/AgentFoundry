@@ -249,6 +249,42 @@ describe("verified merge journal boundary", () => {
     }
   });
 
+  it("fails closed when retained merge evidence cannot be read", async () => {
+    const get = vi.fn(async () => ({
+      id: 456,
+      issue_url: "https://api.github.com/repos/owner/repo/issues/7",
+      user: { id: 123, type: "User" },
+      created_at: evidence.authorized_at,
+      updated_at: evidence.authorized_at,
+      body: `MERGE AUTHORIZE ${ticket} impl-1 ${revision} review-1`,
+    }));
+    const reader = {
+      get: vi.fn(async (): Promise<typeof evidence> => {
+        throw new Error("Independent retention service unavailable");
+      }),
+    };
+    const resolve = createGitHubMergeAuthorizationResolver(
+      get,
+      reader,
+      "owner/repo",
+      7,
+      456,
+    );
+    const append = vi.fn(() => state);
+    const journal = { append, read: vi.fn(() => []) } as unknown as Journal;
+    const writer = new VerifiedMergeAuthorizationWriter(
+      journal,
+      ticket,
+      [123],
+      resolve,
+      async () => state,
+    );
+    await expect(
+      writer.append(ticket, "MERGE_AUTHORIZED", "human:123", payload),
+    ).rejects.toThrow("Independent retention service unavailable");
+    expect(append).not.toHaveBeenCalled();
+  });
+
   it("does not append when independent verification fails", async () => {
     const { writer, append, verifiedState } = setup(evidence);
     verifiedState.mockRejectedValueOnce(new Error("Untrusted SIP history"));
