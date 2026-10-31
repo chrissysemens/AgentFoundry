@@ -309,6 +309,7 @@ describe("signed approval to journal integration", () => {
         gateway,
         "ticket",
       );
+    const count = () => holder.journal?.read("ticket").length ?? 0;
     try {
       const first = openWriter();
       await first.append("ticket", "TICKET_CREATED", "human:owner", {
@@ -364,7 +365,7 @@ describe("signed approval to journal integration", () => {
       );
       expect(resumed.status).toBe("IMPLEMENTING");
       expect(resumed.approved_revision).toBe("4");
-      expect(holder.journal?.read("ticket")).toHaveLength(9);
+      expect(count()).toBe(9);
       revoked = true;
       await expect(
         restarted.append("ticket", "CODE_SUBMITTED", "agent:dev", {
@@ -372,7 +373,7 @@ describe("signed approval to journal integration", () => {
           code_revision: "c".repeat(40),
         }),
       ).rejects.toThrow("Immutable approval attestation required");
-      expect(holder.journal?.read("ticket")).toHaveLength(9);
+      expect(count()).toBe(9);
     } finally {
       holder.journal?.close();
       rmSync(directory, { recursive: true, force: true });
