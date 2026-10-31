@@ -230,6 +230,129 @@ describe("signed approval to journal integration", () => {
     ).rejects.toThrow("Immutable approval attestation required");
     expect(journal?.read("ticket")).toHaveLength(4);
   });
+  it("reverifies two independently signed SIP revisions across SQLite restart", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-multi-revision-"));
+    const path = join(directory, "events.sqlite");
+    const secondSip = "# Revised SIP\\n";
+    const secondSha = "b".repeat(40);
+    const secondPayload: ApprovalAttestation = {
+      ...payload,
+      comment_id: 457,
+      sip_revision: "4",
+      sip_git_sha: secondSha,
+      sip_sha256: digest(secondSip),
+    };
+    const secondReceipt = {
+      ...receipt,
+      sip_revision: "4",
+      sip_git_sha: secondSha,
+      sip_sha256: secondPayload.sip_sha256,
+      source_event_id: "457",
+    };
+    const attestations = new Map([
+      [456, payload],
+      [457, secondPayload],
+    ]);
+    let revoked = false;
+    const get = async (requestPath: string): Promise<unknown> => {
+      if (requestPath.includes("/issues/comments/")) {
+        const id = Number(requestPath.split("/").pop());
+        const approved = attestations.get(id);
+        if (!approved) throw new Error("Unknown approval comment");
+        return {
+          id,
+          issue_url: "https://api.github.com/repos/owner/repo/issues/7",
+          user: { id: 123, type: "User" },
+          created_at: approved.approved_at,
+          updated_at: approved.approved_at,
+          body: `Approved revision ${approved.sip_revision} at ${approved.sip_git_sha} digest ${approved.sip_sha256}`,
+        };
+      }
+      return {
+        type: "file",
+        encoding: "base64",
+        content: Buffer.from(requestPath.endsWith(secondSha) ? secondSip : sip).toString("base64"),
+      };
+    };
+    const gateway = createVerifiedGitHubApprovalGateway(
+      get,
+      "docs/SIP.md",
+      "4",
+      {
+        get: async (_repository, commentId) => {
+          const approved = attestations.get(commentId);
+          if (!approved || (revoked && commentId === 456)) return undefined;
+          return {
+            payload: approved,
+            key_id: "operator",
+            signature_base64: sign(
+              null,
+              approvalAttestationSigningBytes(approved),
+              privateKey,
+            ).toString("base64"),
+          };
+        },
+      },
+      trust,
+      { [sha]: "3", [secondSha]: "4" },
+    );
+    const holder: { journal?: SQLiteJournal } = {};
+    const openWriter = () =>
+      new VerifiedApprovalWriter(
+        (verify) => {
+          holder.journal = new SQLiteJournal(path, verify);
+          return holder.journal;
+        },
+        policy,
+        gateway,
+        "ticket",
+      );
+    try {
+      const first = openWriter();
+      await first.append("ticket", "TICKET_CREATED", "human:owner", { title: "Two revisions" });
+      await first.append("ticket", "GRILL_STARTED", "agent:planner");
+      await first.append("ticket", "SIP_PROPOSED", "agent:planner", { revision: "3", sha256: payload.sip_sha256 });
+      await first.append("ticket", "SIP_APPROVED", "human:owner", { revision: "3", sha256: payload.sip_sha256, receipt });
+      await first.append("ticket", "IMPLEMENTATION_STARTED", "agent:dev", {
+        revision: "3",
+        sha256: payload.sip_sha256,
+        implementation_id: "first-implementation",
+      });
+      await first.append("ticket", "ESCALATED", "agent:planner", { reason: "REDESIGN" });
+      await first.append("ticket", "SIP_PROPOSED", "agent:planner", { revision: "4", sha256: secondPayload.sip_sha256 });
+      const approved = await first.append("ticket", "SIP_APPROVED", "human:owner", {
+        revision: "4",
+        sha256: secondPayload.sip_sha256,
+        receipt: secondReceipt,
+      });
+      expect(approved.approved_revision).toBe("4");
+      expect(holder.journal?.read("ticket")).toHaveLength(8);
+      holder.journal?.close();
+      holder.journal = undefined;
+
+      const restarted = openWriter();
+      const resumed = await restarted.append("ticket", "IMPLEMENTATION_STARTED", "agent:dev", {
+        revision: "4",
+        sha256: secondPayload.sip_sha256,
+        implementation_id: "second-implementation",
+      });
+      expect(resumed.status).toBe("IMPLEMENTING");
+      expect(resumed.approved_revision).toBe("4");
+      expect(holder.journal?.read("ticket")).toHaveLength(9);
+      revoked = true;
+      await expect(
+        restarted.append("ticket", "CODE_SUBMITTED", "agent:dev", {
+          implementation_id: "second-implementation",
+          code_revision: "c".repeat(40),
+        }),
+      ).rejects.toThrow("Immutable approval attestation required");
+      expect(holder.journal?.read("ticket")).toHaveLength(9);
+    } finally {
+      holder.journal?.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("reverifies signed historical approvals after SQLite restart and blocks revoked evidence", async () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-signed-restart-"));
     const path = join(directory, "events.sqlite");
