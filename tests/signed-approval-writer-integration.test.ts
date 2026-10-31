@@ -233,7 +233,7 @@ describe("signed approval to journal integration", () => {
   it("reverifies two independently signed SIP revisions across SQLite restart", async () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-multi-revision-"));
     const path = join(directory, "events.sqlite");
-    const secondSip = "# Revised SIP\\n";
+    const secondSip = "# Revised SIP\n";
     const secondSha = "b".repeat(40);
     const secondPayload: ApprovalAttestation = {
       ...payload,
@@ -271,7 +271,9 @@ describe("signed approval to journal integration", () => {
       return {
         type: "file",
         encoding: "base64",
-        content: Buffer.from(requestPath.endsWith(secondSha) ? secondSip : sip).toString("base64"),
+        content: Buffer.from(
+          requestPath.endsWith(secondSha) ? secondSip : sip,
+        ).toString("base64"),
       };
     };
     const gateway = createVerifiedGitHubApprovalGateway(
@@ -309,33 +311,57 @@ describe("signed approval to journal integration", () => {
       );
     try {
       const first = openWriter();
-      await first.append("ticket", "TICKET_CREATED", "human:owner", { title: "Two revisions" });
+      await first.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Two revisions",
+      });
       await first.append("ticket", "GRILL_STARTED", "agent:planner");
-      await first.append("ticket", "SIP_PROPOSED", "agent:planner", { revision: "3", sha256: payload.sip_sha256 });
-      await first.append("ticket", "SIP_APPROVED", "human:owner", { revision: "3", sha256: payload.sip_sha256, receipt });
+      await first.append("ticket", "SIP_PROPOSED", "agent:planner", {
+        revision: "3",
+        sha256: payload.sip_sha256,
+      });
+      await first.append("ticket", "SIP_APPROVED", "human:owner", {
+        revision: "3",
+        sha256: payload.sip_sha256,
+        receipt,
+      });
       await first.append("ticket", "IMPLEMENTATION_STARTED", "agent:dev", {
         revision: "3",
         sha256: payload.sip_sha256,
         implementation_id: "first-implementation",
       });
-      await first.append("ticket", "ESCALATED", "agent:planner", { reason: "REDESIGN" });
-      await first.append("ticket", "SIP_PROPOSED", "agent:planner", { revision: "4", sha256: secondPayload.sip_sha256 });
-      const approved = await first.append("ticket", "SIP_APPROVED", "human:owner", {
+      await first.append("ticket", "ESCALATED", "agent:planner", {
+        reason: "REDESIGN",
+      });
+      await first.append("ticket", "SIP_PROPOSED", "agent:planner", {
         revision: "4",
         sha256: secondPayload.sip_sha256,
-        receipt: secondReceipt,
       });
+      const approved = await first.append(
+        "ticket",
+        "SIP_APPROVED",
+        "human:owner",
+        {
+          revision: "4",
+          sha256: secondPayload.sip_sha256,
+          receipt: secondReceipt,
+        },
+      );
       expect(approved.approved_revision).toBe("4");
       expect(holder.journal?.read("ticket")).toHaveLength(8);
       holder.journal?.close();
       holder.journal = undefined;
 
       const restarted = openWriter();
-      const resumed = await restarted.append("ticket", "IMPLEMENTATION_STARTED", "agent:dev", {
-        revision: "4",
-        sha256: secondPayload.sip_sha256,
-        implementation_id: "second-implementation",
-      });
+      const resumed = await restarted.append(
+        "ticket",
+        "IMPLEMENTATION_STARTED",
+        "agent:dev",
+        {
+          revision: "4",
+          sha256: secondPayload.sip_sha256,
+          implementation_id: "second-implementation",
+        },
+      );
       expect(resumed.status).toBe("IMPLEMENTING");
       expect(resumed.approved_revision).toBe("4");
       expect(holder.journal?.read("ticket")).toHaveLength(9);
