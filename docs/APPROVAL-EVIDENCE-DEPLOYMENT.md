@@ -107,3 +107,33 @@ authenticated retained-decision verifier, protected deployment, and
 transactional cross-process authorization are **not implemented**. No
 `MERGE_AUTHORIZED` event should be treated as production-authorized until
 these requirements are met.
+
+## Merge decision verification acceptance protocol
+
+A production implementation must use a versioned, domain-separated Ed25519
+signature over a deterministic serialization containing **all** of:
+
+- Protocol version and purpose (merge authorization, never SIP approval).
+- Repository owner/name, GitHub issue number, and comment ID.
+- Numeric authenticated GitHub author ID and original comment timestamp.
+- Ticket ID, implementation ID, full 40-character accepted commit SHA, and
+  independent Oracle review ID.
+- Operator signing-key identifier outside the signed payload, resolved only
+  against an independently configured trust policy.
+
+Verification must reject extra or ambiguous representations of signed fields,
+unknown signing keys, signatures with the wrong purpose, altered payloads,
+replayed evidence from another repository or comment, and decisions that have
+been revoked. A valid signature is **necessary but not sufficient**: the
+independent retention reader must establish record identity and current
+revocation status, and the authenticated GitHub reader must still establish
+the comment's author and unedited content. Neither an arbitrary
+`RetainedMergeDecisionReader` nor a successful signature check alone proves
+these properties.
+
+Before enabling the writer in production, exercise a full end-to-end test
+against a real external retention backend and isolated signer, including
+key rotation and revocation, simultaneous writers in separate processes,
+a state change between review and append, and an interrupted append/retry.
+Record the exact commit, CI results, and independent Oracle verdict. Fail
+closed if any of these checks cannot be performed.
