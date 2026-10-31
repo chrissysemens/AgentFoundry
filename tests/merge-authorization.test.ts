@@ -18,15 +18,20 @@ const evidence = {
   authorized_at: "2026-10-31T12:00:00.000Z",
 };
 
+const check = (
+  current: State = state,
+  approval: typeof evidence | undefined = evidence,
+  humans: number[] = [123],
+) => validateMergeAuthorization(current, approval, humans);
+
 describe("separate merge authorization gate", () => {
   it("accepts matching independently verified human evidence", () => {
-    const authorize = () => validateMergeAuthorization(state, evidence, [123]);
-    expect(authorize).not.toThrow();
+    expect(() => check()).not.toThrow();
   });
 
   it("fails closed without evidence or with an unauthorized human", () => {
-    expect(() => validateMergeAuthorization(state, undefined, [123])).toThrow();
-    expect(() => validateMergeAuthorization(state, evidence, [456])).toThrow();
+    expect(() => check(state, undefined)).toThrow();
+    expect(() => check(state, evidence, [456])).toThrow();
   });
 
   it("rejects stale commit, review, ticket, and nonaccepted state", () => {
@@ -35,12 +40,8 @@ describe("separate merge authorization gate", () => {
       { review_id: "oracle-old" },
       { ticket_id: "OTHER" },
     ]) {
-      expect(() =>
-        validateMergeAuthorization(state, { ...evidence, ...changed }, [123]),
-      ).toThrow();
+      expect(() => check(state, { ...evidence, ...changed })).toThrow();
     }
-    expect(() =>
-      validateMergeAuthorization({ ...state, status: "REWORK" }, evidence, [123]),
-    ).toThrow();
+    expect(() => check({ ...state, status: "REWORK" })).toThrow();
   });
 });
