@@ -51,7 +51,7 @@ const paths = [path, path + "-wal", path + "-shm", path + ".untrusted-rename", p
 const before = paths.map(snapshot);
 const script = `
 import { DatabaseSync } from "node:sqlite";
-import { openSync, closeSync, renameSync, unlinkSync, writeSync } from "node:fs";
+import { openSync, closeSync, renameSync, unlinkSync, writeSync, existsSync } from "node:fs";
 const path = process.argv[1];
 let failed = false;
 function denied(name, action) {
@@ -86,7 +86,7 @@ denied("database write descriptor", () => {
 denied("database replace", () => renameSync(path, path + ".untrusted-rename"));
 denied("database delete", () => unlinkSync(path));
 for (const suffix of ["-wal", "-shm"]) {
-  denied("write " + suffix, () => {
+  if (existsSync(path + suffix)) denied("write " + suffix, () => {
     const fd = openSync(path + suffix, "r+");
     try { writeSync(fd, Buffer.from([0])); } finally { closeSync(fd); }
   });
