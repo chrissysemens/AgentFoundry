@@ -10,7 +10,7 @@ const probe = readFileSync(
   "utf8",
 );
 const start = probe.indexOf("function denied(name, action) {");
-const end = probe.indexOf('\ndenied("direct SQL insert"', start);
+const end = probe.indexOf("\\ndenied(\"direct SQL insert\"", start);
 assert.ok(start >= 0 && end > start, "Probe denial classifier not found");
 const classifier = probe.slice(start, end);
 
