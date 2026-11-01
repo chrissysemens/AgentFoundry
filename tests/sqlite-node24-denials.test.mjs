@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { test } from "node:test";
+import { test } from "vitest";
 import { Script } from "node:vm";
 
 // Static extraction of the root-only probe classifier: this is NOT a
