@@ -35,7 +35,9 @@ export function assertTrustedWriterFilesystem(
   ] as const) {
     const info = lstatSync(path);
     if (!info.isDirectory() || info.uid !== uid || (info.mode & 0o077) !== 0) {
-      throw new Error(`Unsafe ${name}: require private directory owned by writer`);
+      throw new Error(
+        `Unsafe ${name}: require private directory owned by writer`,
+      );
     }
   }
   const file = lstatSync(db);
