@@ -24,10 +24,16 @@ export async function startCrossUidMergeBridge(
   workerGid: number,
 ): Promise<{ server: Server; close(): Promise<void> }> {
   const uid = process.getuid?.();
+  const gid = process.getgid?.();
   if (
     process.platform !== "linux" ||
     uid === undefined ||
     uid === 0 ||
+    gid === undefined ||
+    gid === 0 ||
+    process.geteuid?.() !== uid ||
+    process.getegid?.() !== gid ||
+    process.getgroups?.().includes(0) ||
     !Number.isSafeInteger(workerGid) ||
     workerGid <= 0 ||
     !process.getgroups?.().includes(workerGid) ||
@@ -42,9 +48,10 @@ export async function startCrossUidMergeBridge(
   const info = lstatSync(directory);
   if (
     !info.isDirectory() ||
+    info.isSymbolicLink() ||
     info.uid !== uid ||
     info.gid !== workerGid ||
-    (info.mode & 0o777) !== 0o710
+    (info.mode & 0o7777) !== 0o710
   ) {
     throw new Error(
       "Bridge directory must be trusted-owned mode 0710 with worker group",
@@ -101,9 +108,12 @@ export async function startCrossUidMergeBridge(
     chownSync(publicSocket, uid, workerGid);
     chmodSync(publicSocket, 0o660);
     const owned = captureOwnedSocket(publicSocket);
+    let closed = false;
     return {
       server,
       async close() {
+        if (closed) return;
+        closed = true;
         await new Promise<void>((resolve, reject) => {
           server.close((error) => (error ? reject(error) : resolve()));
         });
@@ -115,7 +125,9 @@ export async function startCrossUidMergeBridge(
       },
     };
   } catch (error) {
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+    if (server.listening) {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
     throw error;
   }
 }
