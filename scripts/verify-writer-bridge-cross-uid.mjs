@@ -123,7 +123,13 @@ async function ready(proc, path) {
   }
   throw new Error("Service socket never appeared: " + path + " " + proc.stderr);
 }
-function probe(uid, gid, socket, expected, payload = { operation: "authorize-merge" }) {
+function probe(
+  uid,
+  gid,
+  socket,
+  expected,
+  payload = { operation: "authorize-merge" },
+) {
   const source = `
     import { createConnection } from "node:net";
     const [path, payload] = process.argv.slice(1);
@@ -313,7 +319,8 @@ try {
   probe(workerUid, workerGid, bridgeSocket, 0);
   // Worker-controlled fields and unknown operations must never reach the writer.
   probe(workerUid, workerGid, bridgeSocket, 8, {
-    operation: "authorize-merge", credential,
+    operation: "authorize-merge",
+    credential,
   });
   probe(workerUid, workerGid, bridgeSocket, 8, {
     operation: "arbitrary-writer-operation",
