@@ -26,7 +26,9 @@ export function assertTrustedWriterLinuxIdentity(
     uid !== euid ||
     gid !== egid
   ) {
-    throw new Error("Trusted writer requires dedicated non-root real/effective identity");
+    throw new Error(
+      "Trusted writer requires dedicated non-root real/effective identity",
+    );
   }
   if (process.getgroups?.().includes(0)) {
     throw new Error("Trusted writer cannot retain root supplementary group");
