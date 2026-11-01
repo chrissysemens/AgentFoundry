@@ -35,7 +35,11 @@ describe("worker broker socket", () => {
   it("enforces non-root Linux identity", async () => {
     if (process.platform === "linux" && process.getuid?.() !== 0) return;
     await expect(
-      startWorkerBrokerSocket("/tmp/agent-foundry-unused.sock", 1, async () => ({})),
+      startWorkerBrokerSocket(
+        "/tmp/agent-foundry-unused.sock",
+        1,
+        async () => ({}),
+      ),
     ).rejects.toThrow();
   });
 
@@ -47,12 +51,16 @@ describe("worker broker socket", () => {
       const socketPath = join(dir, "broker.sock");
       mkdirSync(dir, { mode: 0o710 });
       chmodSync(dir, 0o710);
-      let listener: Awaited<ReturnType<typeof startWorkerBrokerSocket>> | undefined;
+      let listener:
+        | Awaited<ReturnType<typeof startWorkerBrokerSocket>>
+        | undefined;
       try {
         listener = await startWorkerBrokerSocket(
           socketPath,
           process.getgid!(),
-          createWorkerBrokerHandler(credential, async () => ({ accepted: true })),
+          createWorkerBrokerHandler(credential, async () => ({
+            accepted: true,
+          })),
         );
         await expect(
           exchange(socketPath, { credential, operation: "authorize-merge" }),
