@@ -23,10 +23,12 @@ export function assertTrustedWriterFilesystem(
     bridgeGid !== undefined &&
     (!Number.isSafeInteger(bridgeGid) ||
       bridgeGid <= 0 ||
-      process.getgid?.() !== bridgeGid &&
-      process.getgroups?.().includes(bridgeGid) !== true)
+      (process.getgid?.() !== bridgeGid &&
+        process.getgroups?.().includes(bridgeGid) !== true))
   ) {
-    throw new Error("Writer must be a member of the designated bridge IPC group");
+    throw new Error(
+      "Writer must be a member of the designated bridge IPC group",
+    );
   }
   if (!isAbsolute(databasePath) || !isAbsolute(socketPath)) {
     throw new Error("Database and socket paths must be absolute");
@@ -44,7 +46,8 @@ export function assertTrustedWriterFilesystem(
     ["socket directory", socketDir],
   ] as const) {
     const info = lstatSync(path);
-    const sharedSocketDir = name === "socket directory" && bridgeGid !== undefined;
+    const sharedSocketDir =
+      name === "socket directory" && bridgeGid !== undefined;
     if (
       !info.isDirectory() ||
       info.isSymbolicLink() ||
