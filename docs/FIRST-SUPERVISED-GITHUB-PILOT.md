@@ -40,16 +40,16 @@ Connect independently authenticated human evidence to the trusted writer and mer
 
 ## Things we still need to build or prove
 
-| Area | What remains |
-| --- | --- |
-| Real issue intake | Read-only GitHub integration and tests |
-| Planning | Interactive questions, draft SIP and exact-version approval |
-| Coding | Sandboxed agent runner, branch creation and PR integration |
-| Reviewing | Operationally independent Oracle execution and exact-commit evidence |
-| Human evidence | Real identity authentication, signing, storage, rotation and revocation |
-| Trusted writer | Production deployment, credential handling and recovery |
-| Security | Hostile bridge, secret exposure, restarts, races and full end-to-end tests |
-| Reuse | Per-repository policy, permissions and easy onboarding |
+| Area              | What remains                                                               |
+| ----------------- | -------------------------------------------------------------------------- |
+| Real issue intake | Read-only GitHub integration and tests                                     |
+| Planning          | Interactive questions, draft SIP and exact-version approval                |
+| Coding            | Sandboxed agent runner, branch creation and PR integration                 |
+| Reviewing         | Operationally independent Oracle execution and exact-commit evidence       |
+| Human evidence    | Real identity authentication, signing, storage, rotation and revocation    |
+| Trusted writer    | Production deployment, credential handling and recovery                    |
+| Security          | Hostile bridge, secret exposure, restarts, races and full end-to-end tests |
+| Reuse             | Per-repository policy, permissions and easy onboarding                     |
 
 ## Rules for the first pilot
 
