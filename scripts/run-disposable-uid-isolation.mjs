@@ -3,13 +3,7 @@
  * Disposable Linux-only cross-UID fixture. Never point this at production data.
  * Run as root: node scripts/run-disposable-uid-isolation.mjs WRITER_UID WRITER_GID WORKER_UID WORKER_GID RESOLVER_UID RESOLVER_GID
  */
-import {
-  mkdtempSync,
-  mkdirSync,
-  chmodSync,
-  chownSync,
-  rmSync,
-} from "node:fs";
+import { mkdtempSync, mkdirSync, chmodSync, chownSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -52,7 +46,9 @@ try {
     { uid: writerUid, gid: writerGid, encoding: "utf8", timeout: 15000 },
   );
   if (setup.status !== 0 || setup.error) {
-    throw Error("Writer fixture setup failed: " + (setup.stderr ?? setup.error));
+    throw Error(
+      "Writer fixture setup failed: " + (setup.stderr ?? setup.error),
+    );
   }
   for (const [label, uid, gid] of [
     ["worker", workerUid, workerGid],
@@ -71,7 +67,9 @@ try {
     process.stdout.write(label + ":\n" + (result.stdout ?? ""));
     if (result.status !== 0 || result.error) {
       throw Error(
-        label + " isolation verification failed: " + (result.stderr ?? result.error),
+        label +
+          " isolation verification failed: " +
+          (result.stderr ?? result.error),
       );
     }
   }
