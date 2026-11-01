@@ -73,23 +73,27 @@ const run = (name, script, args) => {
   }
   console.log(`PASS: ${name}`);
 };
-run("broker cannot mutate writer SQLite", "scripts/verify-sqlite-uid-isolation.mjs", [
-  databasePath,
-  String(brokerUid),
-  String(brokerGid),
-]);
-run("worker cannot mutate writer SQLite", "scripts/verify-sqlite-uid-isolation.mjs", [
-  databasePath,
-  String(workerUid),
-  String(sharedGid),
-]);
-run("worker allowed; outsider denied broker socket", "scripts/verify-broker-cross-uid.mjs", [
-  String(brokerUid),
-  String(sharedGid),
-  String(workerUid),
-  String(outsiderUid),
-  String(outsiderGid),
-]);
+run(
+  "broker cannot mutate writer SQLite",
+  "scripts/verify-sqlite-uid-isolation.mjs",
+  [databasePath, String(brokerUid), String(brokerGid)],
+);
+run(
+  "worker cannot mutate writer SQLite",
+  "scripts/verify-sqlite-uid-isolation.mjs",
+  [databasePath, String(workerUid), String(sharedGid)],
+);
+run(
+  "worker allowed; outsider denied broker socket",
+  "scripts/verify-broker-cross-uid.mjs",
+  [
+    String(brokerUid),
+    String(sharedGid),
+    String(workerUid),
+    String(outsiderUid),
+    String(outsiderGid),
+  ],
+);
 console.log(
   "PASS: scoped three-UID isolation checks; broker-to-writer IPC NOT TESTED",
 );

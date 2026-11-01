@@ -23,6 +23,7 @@ node scripts/verify-three-uid-isolation.mjs \
 identities and unsafe database ownership before running child tests.
 
 The gate must pass all three subprocesses:
+
 1. Broker UID cannot insert a forged `MERGE_AUTHORIZED` event, write
    the database or mutate SQLite sidecars and parent directory.
 2. Worker UID is denied the same attacks.
