@@ -66,7 +66,9 @@ export async function startWorkerBrokerSocket(
       input += chunk.toString("utf8");
       if (Buffer.byteLength(input, "utf8") > 4_096) {
         complete = true;
-        socket.end(JSON.stringify({ ok: false, error: "Request rejected" }) + "\n");
+        socket.end(
+          JSON.stringify({ ok: false, error: "Request rejected" }) + "\n",
+        );
         return;
       }
       const newline = input.indexOf("\n");
@@ -83,7 +85,9 @@ export async function startWorkerBrokerSocket(
           if (!socket.destroyed) socket.end(response);
         } catch {
           if (!socket.destroyed) {
-            socket.end(JSON.stringify({ ok: false, error: "Request rejected" }) + "\n");
+            socket.end(
+              JSON.stringify({ ok: false, error: "Request rejected" }) + "\n",
+            );
           }
         }
       })();
