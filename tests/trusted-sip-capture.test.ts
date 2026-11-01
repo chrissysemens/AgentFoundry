@@ -35,8 +35,8 @@ describe("trusted SIP approval capture", () => {
     let retained: unknown;
     const putIfAbsent = vi.fn(
       async (_repo: string, _commentId: number, signed: unknown) => {
-      if (retained) return false;
-      retained = signed;
+        if (retained) return false;
+        retained = signed;
         return true;
       },
     );
