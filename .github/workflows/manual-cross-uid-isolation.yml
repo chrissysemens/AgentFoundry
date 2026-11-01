@@ -28,7 +28,7 @@ jobs:
         run: |
           test "$(node -p 'process.versions.node.split(".")[0]')" = 24
           command -v setpriv
-          sudo test "$(id -u)" = 0
+          test "$(sudo id -u)" = 0
       - name: Run real Linux cross-UID fixture as root
         run: |
           sudo "$(command -v node)" scripts/verify-writer-bridge-cross-uid.mjs \
