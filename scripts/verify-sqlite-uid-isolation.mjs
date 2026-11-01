@@ -23,7 +23,9 @@ function positiveIdentity(value, name) {
   return number;
 }
 if (!rawPath) {
-  throw Error("Usage: verify-sqlite-uid-isolation.mjs DB_PATH UNTRUSTED_UID UNTRUSTED_GID");
+  throw Error(
+    "Usage: verify-sqlite-uid-isolation.mjs DB_PATH UNTRUSTED_UID UNTRUSTED_GID",
+  );
 }
 const uid = positiveIdentity(rawUid, "untrusted UID");
 const gid = positiveIdentity(rawGid, "untrusted GID");
@@ -31,7 +33,9 @@ const path = resolve(rawPath);
 const db = lstatSync(path);
 const dir = lstatSync(dirname(path));
 if (!db.isFile() || !dir.isDirectory() || db.uid === uid || dir.uid === uid) {
-  throw Error("Require existing SQLite file and directory owned by a different UID");
+  throw Error(
+    "Require existing SQLite file and directory owned by a different UID",
+  );
 }
 const script = `
 import { DatabaseSync } from "node:sqlite";
