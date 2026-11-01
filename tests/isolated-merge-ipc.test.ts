@@ -54,7 +54,7 @@ describe.skipIf(process.platform === "win32")("isolated merge socket transport",
     const path = join(dir, "writer.sock");
     const server = createIsolatedMergeSocketServer(
       path,
-      async () => ({}) as State,
+      async () => ({} as State),
     );
     try {
       await new Promise<void>((resolve) => server.listen(path, resolve));
