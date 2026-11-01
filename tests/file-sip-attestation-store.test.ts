@@ -30,14 +30,12 @@ describe("file SIP attestation store", () => {
       key_id: "operator",
       signature_base64: "c".repeat(88),
     };
-    await expect(first.putIfAbsent("owner/repo", 456, signed)).resolves.toBe(
-      true,
-    );
+    const created = await first.putIfAbsent("owner/repo", 456, signed);
+    expect(created).toBe(true);
     const restarted = new FileSipAttestationStore(directory);
     await expect(restarted.get("owner/repo", 456)).resolves.toEqual(signed);
-    await expect(restarted.putIfAbsent("owner/repo", 456, signed)).resolves.toBe(
-      false,
-    );
+    const duplicate = await restarted.putIfAbsent("owner/repo", 456, signed);
+    expect(duplicate).toBe(false);
     await expect(restarted.get("owner/repo", 457)).resolves.toBeUndefined();
     await expect(
       restarted.putIfAbsent("owner/repo", 457, signed),
