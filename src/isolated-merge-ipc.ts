@@ -1,5 +1,6 @@
 import { createServer, type Server } from "node:net";
 import { chmodSync, lstatSync, unlinkSync } from "node:fs";
+import type { Stats } from "node:fs";
 import type { TrustedMergeRequestHandler } from "./trusted-merge-request.ts";
 
 /**
@@ -65,10 +66,24 @@ export function assertSocketPathUnused(socketPath: string): void {
   throw new Error("Socket path already exists; refusing to replace it");
 }
 
-/** Cleanup only the socket created by this service, after server.close(). */
-export function removeOwnedSocket(socketPath: string): void {
-  if (!lstatSync(socketPath).isSocket()) {
-    throw new Error("Refusing to unlink non-socket path");
+/** Capture the exact socket inode after listen; never trust pathname alone. */
+export function captureOwnedSocket(socketPath: string): Stats {
+  const info = lstatSync(socketPath);
+  if (!info.isSocket()) {
+    throw new Error("Trusted writer listener did not create a socket");
+  }
+  return info;
+}
+
+/** Cleanup only the original socket inode after server.close(). */
+export function removeOwnedSocket(socketPath: string, owned: Stats): void {
+  const current = lstatSync(socketPath);
+  if (
+    !current.isSocket() ||
+    current.dev !== owned.dev ||
+    current.ino !== owned.ino
+  ) {
+    throw new Error("Refusing to unlink replaced socket path");
   }
   unlinkSync(socketPath);
 }
