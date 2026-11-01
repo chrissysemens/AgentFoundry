@@ -22,7 +22,11 @@ export function createFixedOperationTrustedRelay(
   let busy = false;
 
   return async (request: unknown): Promise<unknown> => {
-    if (request === null || typeof request !== "object" || Array.isArray(request)) {
+    if (
+      request === null ||
+      typeof request !== "object" ||
+      Array.isArray(request)
+    ) {
       throw new Error("Invalid relay request");
     }
     const record = request as Record<string, unknown>;
@@ -36,12 +40,7 @@ export function createFixedOperationTrustedRelay(
     ) {
       throw new Error("Invalid relay request");
     }
-    if (
-      !timingSafeEqual(
-        expected,
-        Buffer.from(record.credential, "hex"),
-      )
-    ) {
+    if (!timingSafeEqual(expected, Buffer.from(record.credential, "hex"))) {
       throw new Error("Relay authentication failed");
     }
     if (busy) throw new Error("Relay authorization already in progress");

@@ -32,9 +32,13 @@ describe("fixed-operation trusted relay", () => {
 
   it("rejects concurrent requests and resets after failure", async () => {
     let rejectFirst: (error: Error) => void = () => {};
-    const send = vi.fn()
+    const send = vi
+      .fn()
       .mockImplementationOnce(
-        () => new Promise((_resolve, reject) => { rejectFirst = reject; }),
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectFirst = reject;
+          }),
       )
       .mockResolvedValueOnce({ ok: true });
     const relay = createFixedOperationTrustedRelay(credential, send);
@@ -47,6 +51,8 @@ describe("fixed-operation trusted relay", () => {
   });
 
   it("rejects invalid deployment credentials", () => {
-    expect(() => createFixedOperationTrustedRelay("invalid", async () => ({}))).toThrow();
+    expect(() =>
+      createFixedOperationTrustedRelay("invalid", async () => ({})),
+    ).toThrow();
   });
 });
