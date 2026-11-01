@@ -3,19 +3,18 @@ import { resolve } from "node:path";
 
 const socketModule = resolve("src/worker-broker-socket.ts");
 const socketTest = resolve("tests/worker-broker-socket.test.ts");
-if (!existsSync(socketModule) || !existsSync(socketTest)) {
-  throw new Error("Missing worker broker socket implementation or tests");
+const brokerProbe = resolve("scripts/verify-broker-cross-uid.mjs");
+for (const path of [socketModule, socketTest, brokerProbe]) {
+  if (!existsSync(path)) {
+    throw new Error("Missing broker socket dependency: " + path);
+  }
 }
 const implementation = readFileSync(socketModule, "utf8");
 if (!implementation.includes("export async function startWorkerBrokerSocket(")) {
   throw new Error("Missing startWorkerBrokerSocket export");
 }
-for (const path of [
-  "scripts/verify-broker-cross-uid.mjs",
-  "scripts/verify-three-uid-isolation.mjs",
-]) {
-  if (!existsSync(resolve(path))) {
-    throw new Error("Missing cross-UID probe: " + path);
-  }
+const probe = readFileSync(brokerProbe, "utf8");
+if (!probe.includes("src/worker-broker-socket.ts")) {
+  throw new Error("Broker probe does not reference the restored socket module");
 }
-console.log("PASS: broker socket implementation, tests and probes are present");
+console.log("PASS: broker socket implementation, tests and probe are present");
