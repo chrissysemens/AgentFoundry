@@ -12,7 +12,10 @@ it, pass it as a CLI argument, or expose it to issue workers. The client sends
 one newline-delimited JSON object:
 
 ```json
-{"credential":"<64 lowercase hex characters>","request":{"operation":"authorize-merge"}}
+{
+  "credential": "<64 lowercase hex characters>",
+  "request": { "operation": "authorize-merge" }
+}
 ```
 
 The wrapper rejects extra top-level fields, malformed credentials, and

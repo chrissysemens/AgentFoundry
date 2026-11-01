@@ -14,7 +14,9 @@ export function createAuthenticatedMergeHandler(
   trustedHandler: TrustedMergeRequestHandler,
 ): TrustedMergeRequestHandler {
   if (!/^[a-f0-9]{64}$/.test(secret)) {
-    throw new Error("Writer IPC secret must be 32 random bytes in lowercase hex");
+    throw new Error(
+      "Writer IPC secret must be 32 random bytes in lowercase hex",
+    );
   }
   const expected = Buffer.from(secret, "hex");
   return async (input: unknown) => {
