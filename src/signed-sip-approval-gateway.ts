@@ -31,11 +31,6 @@ export function createSignedSipApprovalGateway(
     fetchSipAtCommit: (repository, gitSha) =>
       github.fetchSipAtCommit(repository, gitSha),
     verifyAttestation: (repository, commentId) =>
-      verifySignedSipApprovalAttestation(
-        store,
-        trust,
-        repository,
-        commentId,
-      ),
+      verifySignedSipApprovalAttestation(store, trust, repository, commentId),
   };
 }
