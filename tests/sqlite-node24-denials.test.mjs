@@ -24,8 +24,7 @@ test("Node 24 SQLite errno 14 and 8 are accepted only for SQL insertion", () => 
       "name",
       "action",
       "outcomes",
-      classifier.replace("function denied(name, action) {", "function denied(name, action) {") +
-        "\nreturn denied(name, action);",
+      classifier + "\nreturn denied(name, action);",
     );
     denied(name, action, outcomes);
     return outcomes[0];
