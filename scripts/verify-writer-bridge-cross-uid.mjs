@@ -123,7 +123,7 @@ async function ready(proc, path) {
   }
   throw new Error("Service socket never appeared: " + path + " " + proc.stderr);
 }
-function probe(uid, gid, socket, expected) {
+function probe(uid, gid, socket, expected, payload = { operation: "authorize-merge" }) {
   const source = `
     import { createConnection } from "node:net";
     const [path, payload] = process.argv.slice(1);
@@ -151,7 +151,7 @@ function probe(uid, gid, socket, expected) {
       "-e",
       source,
       socket,
-      JSON.stringify({ operation: "authorize-merge" }),
+      JSON.stringify(payload),
     ],
     {
       uid,
@@ -170,6 +170,31 @@ function probe(uid, gid, socket, expected) {
         ": " +
         (result.stderr ?? result.error),
     );
+  }
+}
+function denySecretRead(uid, gid) {
+  const source = `
+    import { readFileSync } from "node:fs";
+    try {
+      readFileSync(process.argv[1], "utf8");
+      process.exit(10);
+    } catch (error) {
+      process.exit(["EACCES", "EPERM"].includes(error.code) ? 0 : 11);
+    }
+  `;
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", source, secretPath],
+    {
+      uid,
+      gid,
+      encoding: "utf8",
+      timeout: 7000,
+      env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+    },
+  );
+  if (result.error || result.status !== 0) {
+    throw new Error("Secret read was not conclusively denied for UID " + uid);
   }
 }
 function negativeSql(uid, gid) {
@@ -286,6 +311,13 @@ try {
 
   // Positive path: distinct worker UID -> bridge -> distinct writer UID.
   probe(workerUid, workerGid, bridgeSocket, 0);
+  // Worker-controlled fields and unknown operations must never reach the writer.
+  probe(workerUid, workerGid, bridgeSocket, 8, {
+    operation: "authorize-merge", credential,
+  });
+  probe(workerUid, workerGid, bridgeSocket, 8, {
+    operation: "arbitrary-writer-operation",
+  });
   // The worker cannot reach the writer's private group-scoped socket.
   probe(workerUid, workerGid, writerSocket, 13);
   // An outsider cannot reach the worker-facing bridge socket.
@@ -293,8 +325,10 @@ try {
   // Neither untrusted identity can mutate the journal or its directory.
   negativeSql(bridgeUid, workerGid);
   negativeSql(workerUid, workerGid);
+  denySecretRead(workerUid, workerGid);
+  denySecretRead(outsiderUid, outsiderGid);
   console.log(
-    "PASS: worker->bridge->writer; denied direct IPC and SQLite mutation",
+    "PASS: worker->bridge->writer; denied unauthorized IPC, SQLite mutation and credential reads",
   );
   console.log(
     "NOT PROVEN: human evidence, hostile bridge behavior, credential secrecy, restart/race resistance",
