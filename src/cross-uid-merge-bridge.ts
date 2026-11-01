@@ -2,7 +2,11 @@ import { chmodSync, chownSync, lstatSync } from "node:fs";
 import { createServer, type Server } from "node:net";
 import { isAbsolute } from "node:path";
 import { requestAuthenticatedMerge } from "./trusted-writer-ipc-client.ts";
-import { assertSocketPathUnused, captureOwnedSocket, removeOwnedSocket } from "./isolated-merge-ipc.ts";
+import {
+  assertSocketPathUnused,
+  captureOwnedSocket,
+  removeOwnedSocket,
+} from "./isolated-merge-ipc.ts";
 
 /**
  * Narrow cross-UID bridge: run under a trusted, non-root identity that can
@@ -42,7 +46,9 @@ export async function startCrossUidMergeBridge(
     info.gid !== workerGid ||
     (info.mode & 0o777) !== 0o710
   ) {
-    throw new Error("Bridge directory must be trusted-owned mode 0710 with worker group");
+    throw new Error(
+      "Bridge directory must be trusted-owned mode 0710 with worker group",
+    );
   }
   assertSocketPathUnused(publicSocket);
   const server = createServer((socket) => {
@@ -72,7 +78,10 @@ export async function startCrossUidMergeBridge(
           ) {
             throw new Error("Invalid bridge request");
           }
-          const state = await requestAuthenticatedMerge(privateSocket, credential);
+          const state = await requestAuthenticatedMerge(
+            privateSocket,
+            credential,
+          );
           socket.end(JSON.stringify({ ok: true, state }) + "\n");
         } catch {
           socket.end('{"ok":false,"error":"Request rejected"}\n');
