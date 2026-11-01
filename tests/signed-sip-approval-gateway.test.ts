@@ -38,20 +38,18 @@ describe("signed SIP evidence gateway", () => {
         },
       },
     );
-    await expect(
-      gateway.verifyAttestation("owner/repo", 456),
-    ).resolves.toEqual(payload);
+    const valid = await gateway.verifyAttestation("owner/repo", 456);
+    expect(valid).toEqual(payload);
     retained = {
       ...(retained as object),
       payload: { ...payload, author_id: 999 },
     };
-    await expect(
-      gateway.verifyAttestation("owner/repo", 456),
-    ).rejects.toThrow("Invalid SIP attestation signature");
+    await expect(gateway.verifyAttestation("owner/repo", 456)).rejects.toThrow(
+      "Invalid SIP attestation signature",
+    );
     retained = undefined;
-    await expect(
-      gateway.verifyAttestation("owner/repo", 456),
-    ).resolves.toBeUndefined();
+    const absent = await gateway.verifyAttestation("owner/repo", 456);
+    expect(absent).toBeUndefined();
     expect(getGitHub).not.toHaveBeenCalled();
   });
 });
