@@ -1,27 +1,24 @@
 name: Format internal PR branches
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - 'security/**'
 
 permissions:
   contents: write
 
 jobs:
   prettier:
-    if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'security/') &&
-      github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     concurrency:
-      group: prettier-${{ github.event.pull_request.head.ref }}
+      group: prettier-${{ github.ref_name }}
       cancel-in-progress: true
     steps:
       - name: Check out PR head
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           persist-credentials: true
 
       - name: Set up Node.js 24
