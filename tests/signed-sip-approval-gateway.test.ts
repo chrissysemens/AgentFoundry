@@ -34,7 +34,9 @@ describe("signed SIP evidence gateway", () => {
       { get: async () => retained },
       {
         trusted_keys: {
-          operator: publicKey.export({ type: "spki", format: "pem" }).toString(),
+          operator: publicKey
+            .export({ type: "spki", format: "pem" })
+            .toString(),
         },
       },
     );
