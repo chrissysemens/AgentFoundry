@@ -5,13 +5,10 @@
 Ordinary `MemoryJournal.append` and `SQLiteJournal.append` reject
 `MERGE_AUTHORIZED`. The `VerifiedMergeAuthorizationWriter` independently
 resolves a human decision, replays verified state, and uses
-`SQLiteJournal.appendIfLastEventMatches` to reject stale snapshots.
+`SQLiteJournal.appendIfLastEventMatches` to reject stale snapshots. Ordinary\nSQLite journal instances now disable that privileged method by default;\ntrusted fixtures can opt in explicitly.
 
 **This is not yet a complete authorization boundary.**
-`appendIfLastEventMatches` is a public method. A caller with a
-`SQLiteJournal` instance can supply the current last event ID and invoke it
-directly without running the independent decision resolver. SQLite locking
-prevents a stale-snapshot race; it does not authenticate a human decision.
+`appendIfLastEventMatches` remains a public method. A caller that can create\na privileged `SQLiteJournal` instance can supply the current last event ID\nand invoke it directly without running the independent decision resolver. SQLite locking\nprevents a stale-snapshot race; it does not authenticate a human decision.\nA process with direct SQLite write access can also INSERT forged events,\nregardless of the journal API or append-only UPDATE/DELETE triggers.\nThe regression test explicitly demonstrates this bypass rather than claiming\nthat application code can block it.
 
 ## Required design before production
 
