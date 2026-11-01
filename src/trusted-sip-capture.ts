@@ -1,7 +1,5 @@
 import { createPrivateKey, sign } from "node:crypto";
-import {
-  validateApprovalCaptureSource,
-} from "./github-approval-evidence.ts";
+import { validateApprovalCaptureSource } from "./github-approval-evidence.ts";
 import { sipAttestationSigningBytes } from "./signed-sip-attestation.ts";
 import type {
   ApprovalAttestation,
@@ -23,7 +21,10 @@ export interface ImmutableSipAttestationSink {
 }
 
 export interface TrustedSipCaptureDependencies {
-  fetchComment(repository: string, commentId: number): Promise<GitHubApprovalEvent>;
+  fetchComment(
+    repository: string,
+    commentId: number,
+  ): Promise<GitHubApprovalEvent>;
   sink: ImmutableSipAttestationSink;
   privateKeyPem: string;
   keyId: string;
