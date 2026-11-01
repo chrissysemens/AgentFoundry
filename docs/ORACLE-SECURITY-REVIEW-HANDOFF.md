@@ -15,7 +15,7 @@ implementation or merge.
 5. Review authorization of human actions separately from approval receipts, especially merge authorization. A string actor label alone is not authenticated human consent.
 6. Confirm independent Oracle verdict is bound to the exact reviewed code revision and that rejected/inconclusive historical reviews remain unchanged.
 7. Review trusted signing-key custody, rotation/revocation, immutable retention/Object Lock, authenticated GitHub API transport, database access controls, recovery and operational audit logging.
-8. Confirm no GitHub App access to Mycelium or autonomous merge privileges are enabled as a side effect.
+8. Confirm no GitHub App access to external product repositories or autonomous merge privileges are enabled as a side effect.
 
 ## Evidence to examine
 
@@ -37,7 +37,7 @@ substitute green CI for independent security review.
 **Current known blockers:** no deployed operator-controlled immutable approval
 retention; no deployed signer/key custody; no authenticated production GitHub
 transport; verified writer not wired into an isolated production runtime; no
-independently authenticated merge authorization; no end-to-end Mycelium pilot.
+independently authenticated merge authorization; no end-to-end external-product pilot.
 
 **Historical note:** FOUND-002 Repair Attempt 2 remains INCONCLUSIVE. Rev 3
 approval is prospective and is not merge authorization.
