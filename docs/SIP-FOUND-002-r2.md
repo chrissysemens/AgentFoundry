@@ -26,7 +26,7 @@ Implement a TypeScript/Node.js version of the Foundry event-sourced workflow, us
 - **Tests:** Vitest; test commands and setup documented for a TypeScript developer.
 - **Local persistence:** SQLite behind a repository/journal interface; in-memory adapter for domain tests. The SQLite driver is an adapter-level choice, not a domain dependency.
 - **Contracts:** Versioned JSON Schema, provider-neutral and consumable from other languages.
-- **MYCELIUM DSP:** C++/JUCE in its own project; no Python required to run or maintain Foundry.
+- **EXTERNAL PRODUCT CODE:** stays in its own repository and technology stack; no Python required to run or maintain Foundry.
 - **Future integrations:** Claude, Codex, GitHub, other tools via adapters; no live provider required in this ticket.
 - **Python reference:** The existing Python prototype is not the production baseline and will not be merged as the Foundry implementation. Port behavior and acceptance tests, not Python modules.
 
