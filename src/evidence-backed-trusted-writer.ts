@@ -1,4 +1,6 @@
 import { SQLiteJournal } from "./journal.ts";
+import { assertTrustedWriterFilesystem } from "./trusted-writer-filesystem.ts";
+import { createSignedGitHubMergeAuthorizationResolver } from "./github-merge-authorization.ts";
 import { createSignedGitHubTrustedMergeService } from "./trusted-merge-service.ts";
 import { createTrustedMergeRequestHandler } from "./trusted-merge-request.ts";
 import { runTrustedWriterProcess } from "./trusted-writer-process.ts";
@@ -42,6 +44,7 @@ export async function runEvidenceBackedTrustedWriter(
   ) {
     throw new Error("Writer and SIP approval policy bindings differ");
   }
+  assertTrustedWriterFilesystem(config.databasePath, config.socketPath);
   const journal = new SQLiteJournal(config.databasePath, undefined, true);
   try {
     const service = createSignedGitHubTrustedMergeService(
@@ -61,8 +64,6 @@ export async function runEvidenceBackedTrustedWriter(
     // Resolve the decision inside the service via the signed GitHub resolver.
     // The service performs an independent second resolution before writing.
     const resolve = async () => {
-      const { createSignedGitHubMergeAuthorizationResolver } =
-        await import("./github-merge-authorization.ts");
       const decision = await createSignedGitHubMergeAuthorizationResolver(
         dependencies.getGitHub,
         dependencies.decisionStore,
