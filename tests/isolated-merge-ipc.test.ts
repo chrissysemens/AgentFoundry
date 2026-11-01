@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createConnection } from "node:net";
 import { describe, expect, it } from "vitest";
-import { assertSocketPathUnused, createIsolatedMergeSocketServer } from "../src/isolated-merge-ipc.ts";
+import {
+  assertSocketPathUnused,
+  createIsolatedMergeSocketServer,
+} from "../src/isolated-merge-ipc.ts";
 import type { State } from "../src/domain.ts";
 
 describe.skipIf(process.platform === "win32")("isolated merge socket transport", () => {
@@ -13,23 +16,32 @@ describe.skipIf(process.platform === "win32")("isolated merge socket transport",
     const seen: unknown[] = [];
     const server = createIsolatedMergeSocketServer(path, async (request) => {
       seen.push(request);
-      if (JSON.stringify(request) !== '{"operation":"authorize-merge"}') throw Error("invalid");
+      if (JSON.stringify(request) !== '{"operation":"authorize-merge"}')
+        throw Error("invalid");
       return { ticket_id: "ticket" } as State;
     });
     try {
       assertSocketPathUnused(path);
       await new Promise<void>((resolve) => server.listen(path, resolve));
       expect(statSync(path).mode & 0o777).toBe(0o600);
-      const send = (body: string) => new Promise<string>((resolve, reject) => {
-        const client = createConnection(path);
-        let response = "";
-        client.on("connect", () => client.write(body + "\n"));
-        client.on("data", (chunk: Buffer) => { response += chunk.toString("utf8"); });
-        client.on("end", () => resolve(response));
-        client.on("error", reject);
-      });
-      expect(JSON.parse(await send('{"operation":"authorize-merge"}')).ok).toBe(true);
-      expect(JSON.parse(await send('{"operation":"authorize-merge","actor":"forged"}')).ok).toBe(false);
+      const send = (body: string) =>
+        new Promise<string>((resolve, reject) => {
+          const client = createConnection(path);
+          let response = "";
+          client.on("connect", () => client.write(body + "\n"));
+          client.on("data", (chunk: Buffer) => {
+            response += chunk.toString("utf8");
+          });
+          client.on("end", () => resolve(response));
+          client.on("error", reject);
+        });
+      expect(JSON.parse(await send('{"operation":"authorize-merge"}')).ok).toBe(
+        true,
+      );
+      expect(
+        JSON.parse(await send('{"operation":"authorize-merge","actor":"forged"}'))
+          .ok,
+      ).toBe(false);
       expect(seen).toHaveLength(2);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -40,7 +52,10 @@ describe.skipIf(process.platform === "win32")("isolated merge socket transport",
   it("refuses an existing socket path", async () => {
     const dir = mkdtempSync(join(tmpdir(), "foundry-ipc-existing-"));
     const path = join(dir, "writer.sock");
-    const server = createIsolatedMergeSocketServer(path, async () => ({} as State));
+    const server = createIsolatedMergeSocketServer(
+      path,
+      async () => ({}) as State,
+    );
     try {
       await new Promise<void>((resolve) => server.listen(path, resolve));
       expect(() => assertSocketPathUnused(path)).toThrow("already exists");
