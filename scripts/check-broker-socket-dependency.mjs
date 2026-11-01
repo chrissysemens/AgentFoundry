@@ -10,7 +10,9 @@ for (const path of [socketModule, socketTest, brokerProbe]) {
   }
 }
 const implementation = readFileSync(socketModule, "utf8");
-if (!implementation.includes("export async function startWorkerBrokerSocket(")) {
+if (
+  !implementation.includes("export async function startWorkerBrokerSocket(")
+) {
   throw new Error("Missing startWorkerBrokerSocket export");
 }
 const probe = readFileSync(brokerProbe, "utf8");
