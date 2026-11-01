@@ -140,7 +140,7 @@ describe("SQLite journal tamper resistance", () => {
   it("rejects a stale merge authorization snapshot across connections", () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-cas-"));
     const path = join(directory, "events.sqlite");
-    const first = new SQLiteJournal(path);
+    const first = new SQLiteJournal(path, undefined, true);
     const second = new SQLiteJournal(path);
     try {
       first.append("ticket", "TICKET_CREATED", "human:owner", {
@@ -167,7 +167,7 @@ describe("SQLite journal tamper resistance", () => {
   it("does not commit a conditional merge while another connection owns the write lock", () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-cas-lock-"));
     const path = join(directory, "events.sqlite");
-    const journal = new SQLiteJournal(path);
+    const journal = new SQLiteJournal(path, undefined, true);
     const external = new DatabaseSync(path);
     try {
       journal.append("ticket", "TICKET_CREATED", "human:owner", {

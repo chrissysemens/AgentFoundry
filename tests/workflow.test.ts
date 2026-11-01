@@ -97,7 +97,7 @@ const adapters = [
   { name: "memory", create: () => new MemoryJournal(fixtureVerifier) },
   {
     name: "sqlite",
-    create: () => new SQLiteJournal(":memory:", fixtureVerifier),
+    create: () => new SQLiteJournal(":memory:", fixtureVerifier, true),
   },
 ];
 
