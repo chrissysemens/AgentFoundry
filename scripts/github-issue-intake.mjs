@@ -7,7 +7,9 @@ export function parseIssueUrl(input) {
   try {
     url = new URL(input);
   } catch {
-    throw new Error("Provide a GitHub issue URL, such as https://github.com/owner/repo/issues/123");
+    throw new Error(
+      "Provide a GitHub issue URL, such as https://github.com/owner/repo/issues/123",
+    );
   }
   if (
     url.protocol !== "https:" ||
@@ -20,10 +22,17 @@ export function parseIssueUrl(input) {
   ) {
     throw new Error("Only plain https://github.com issue URLs are accepted");
   }
-  const match = /^\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/issues\/([1-9][0-9]*)\/?$/.exec(
-    url.pathname,
-  );
-  if (!match || match[1] === "." || match[2] === "." || match[1] === ".." || match[2] === "..") {
+  const match =
+    /^\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/issues\/([1-9][0-9]*)\/?$/.exec(
+      url.pathname,
+    );
+  if (
+    !match ||
+    match[1] === "." ||
+    match[2] === "." ||
+    match[1] === ".." ||
+    match[2] === ".."
+  ) {
     throw new Error("Expected https://github.com/owner/repo/issues/123");
   }
   const number = Number(match[3]);
@@ -52,14 +61,20 @@ export async function fetchIssue(input, { fetchImpl = fetch, token } = {}) {
       signal: AbortSignal.timeout(10000),
     });
   } catch {
-    throw new Error("Could not reach GitHub. Check the network or try again later.");
+    throw new Error(
+      "Could not reach GitHub. Check the network or try again later.",
+    );
   }
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error("Issue not found or not accessible with these credentials.");
+      throw new Error(
+        "Issue not found or not accessible with these credentials.",
+      );
     }
     if (response.status === 401 || response.status === 403) {
-      throw new Error("GitHub denied access. Check read-only token permissions or rate limits.");
+      throw new Error(
+        "GitHub denied access. Check read-only token permissions or rate limits.",
+      );
     }
     throw new Error(`GitHub returned HTTP ${response.status}.`);
   }
@@ -76,7 +91,7 @@ export async function fetchIssue(input, { fetchImpl = fetch, token } = {}) {
     "pull_request" in data ||
     typeof data.title !== "string" ||
     !data.title.trim() ||
-    typeof data.body !== "string" && data.body !== null ||
+    (typeof data.body !== "string" && data.body !== null) ||
     data.number !== number ||
     data.repository_url !== `https://api.github.com/repos/${owner}/${repo}` ||
     data.html_url !== `https://github.com/${owner}/${repo}/issues/${number}`
@@ -121,7 +136,9 @@ export function summarizeIssue(issue) {
 async function main() {
   const input = process.argv[2];
   if (!input || process.argv.length !== 3) {
-    console.error("Usage: npm run issue -- https://github.com/owner/repo/issues/123");
+    console.error(
+      "Usage: npm run issue -- https://github.com/owner/repo/issues/123",
+    );
     process.exitCode = 1;
     return;
   }
@@ -129,11 +146,16 @@ async function main() {
     const issue = await fetchIssue(input, { token: process.env.GITHUB_TOKEN });
     console.log(summarizeIssue(issue));
   } catch (error) {
-    console.error(error instanceof Error ? error.message : "Issue lookup failed.");
+    console.error(
+      error instanceof Error ? error.message : "Issue lookup failed.",
+    );
     process.exitCode = 1;
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   await main();
 }

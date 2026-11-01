@@ -73,7 +73,11 @@ test("rejects pull requests and mismatched repositories", async () => {
 
 test("handles unavailable, forbidden and invalid responses without leaking tokens", async () => {
   await assert.rejects(
-    fetchIssue(url, { fetchImpl: async () => { throw new Error("secret-token"); } }),
+    fetchIssue(url, {
+      fetchImpl: async () => {
+        throw new Error("secret-token");
+      },
+    }),
     /Could not reach GitHub/,
   );
   for (const status of [401, 403, 404, 500]) {
@@ -87,7 +91,12 @@ test("handles unavailable, forbidden and invalid responses without leaking token
   }
   await assert.rejects(
     fetchIssue(url, {
-      fetchImpl: async () => ({ ok: true, json: async () => { throw new Error("secret-token"); } }),
+      fetchImpl: async () => ({
+        ok: true,
+        json: async () => {
+          throw new Error("secret-token");
+        },
+      }),
     }),
     /invalid JSON/,
   );
