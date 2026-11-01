@@ -7,7 +7,7 @@
  * Never run on the production journal. Does not grant production readiness.
  */
 import { spawnSync } from "node:child_process";
-import { lstatSync, statSync } from "node:fs";
+import { lstatSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 const [rawPath, rawUid, rawGid] = process.argv.slice(2);
