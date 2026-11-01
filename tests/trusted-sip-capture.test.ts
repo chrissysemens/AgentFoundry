@@ -33,7 +33,7 @@ describe("trusted SIP approval capture", () => {
   it("signs authenticated evidence and refuses duplicate retention", async () => {
     const { publicKey, privateKey } = generateKeyPairSync("ed25519");
     let retained: unknown;
-    const putIfAbsent = vi.fn(async (_repo, _commentId, signed) => {
+    const putIfAbsent = vi.fn(async (_repo: string, _commentId: number, signed: unknown) => {
       if (retained) return false;
       retained = signed;
       return true;
@@ -41,7 +41,9 @@ describe("trusted SIP approval capture", () => {
     const dependencies = {
       fetchComment: vi.fn(async () => comment),
       sink: { putIfAbsent },
-      privateKeyPem: privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+      privateKeyPem: privateKey
+        .export({ type: "pkcs8", format: "pem" })
+        .toString(),
       keyId: "operator",
     };
     const signed = await captureSignedSipApproval(
@@ -55,7 +57,9 @@ describe("trusted SIP approval capture", () => {
         { get: async () => retained },
         {
           trusted_keys: {
-            operator: publicKey.export({ type: "spki", format: "pem" }).toString(),
+            operator: publicKey
+              .export({ type: "spki", format: "pem" })
+              .toString(),
           },
         },
         "owner/repo",
@@ -77,7 +81,9 @@ describe("trusted SIP approval capture", () => {
           updated_at: "2026-11-01T12:00:00.000Z",
         }),
         sink: { putIfAbsent },
-        privateKeyPem: privateKey.export({ type: "pkcs8", format: "pem" }).toString(),
+        privateKeyPem: privateKey
+          .export({ type: "pkcs8", format: "pem" })
+          .toString(),
         keyId: "operator",
       }),
     ).rejects.toThrow("Approval capture source is not trusted");
