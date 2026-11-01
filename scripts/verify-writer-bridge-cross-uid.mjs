@@ -240,7 +240,25 @@ try {
     await startCrossUidMergeBridge(${JSON.stringify(bridgeSocket)}, ${JSON.stringify(writerSocket)}, credential, ${workerGid});
     console.log("ready");
   `;
-  const bridge = spawnAs(bridgeSource, bridgeUid, workerGid);
+  // Bridge needs both groups: writer IPC and worker-facing socket.
+  // setpriv is a fixture-only util-linux dependency; fail if unavailable.
+  const setpriv = spawnSync("setpriv", ["--version"], { encoding: "utf8" });
+  if (setpriv.error || setpriv.status !== 0) {
+    throw new Error("util-linux setpriv is required for supplementary group fixture");
+  }
+  const bridgeChild = spawn("setpriv", [
+    "--reuid", String(bridgeUid), "--regid", String(workerGid),
+    "--groups", String(bridgeGid) + "," + String(workerGid),
+    process.execPath, "--experimental-strip-types", "--input-type=module", "-e", bridgeSource,
+  ], {
+    stdio: ["ignore", "pipe", "pipe"],
+    env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+  });
+  let bridgeStderr = "";
+  bridgeChild.stderr.on("data", (data) => { bridgeStderr += data.toString(); });
+  bridgeChild.on("error", (error) => { bridgeStderr += String(error); });
+  children.push(bridgeChild);
+  const bridge = { child: bridgeChild, get stderr() { return bridgeStderr; } };
   await ready(bridge, bridgeSocket);
 
   // Positive path: distinct worker UID -> bridge -> distinct writer UID.
