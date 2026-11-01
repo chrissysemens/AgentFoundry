@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { generateKeyPairSync, sign } from "node:crypto";
+import { describe, expect, it } from "vitest";
 import {
   sipAttestationSigningBytes,
   verifySignedSipApprovalAttestation,
@@ -50,7 +50,12 @@ describe("signed SIP approval attestation", () => {
     ).rejects.toThrow("Invalid signed SIP attestation");
     await expect(
       verifySignedSipApprovalAttestation(
-        { get: async () => ({ ...entry, payload: { ...payload, sip_revision: "v3" } }) },
+        {
+          get: async () => ({
+            ...entry,
+            payload: { ...payload, sip_revision: "v3" },
+          }),
+        },
         { trusted_keys },
         "owner/repo",
         456,
