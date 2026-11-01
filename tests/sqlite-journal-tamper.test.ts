@@ -10,6 +10,35 @@ import type { TrustedGitHubApprovalGateway } from "../src/github-approval-resolv
 import { fixtureReceipt } from "./approval-fixture.ts";
 
 describe("SQLite journal tamper resistance", () => {
+  it("demonstrates why an untrusted SQLite writer must be denied database access", () => {
+    const directory = mkdtempSync(join(tmpdir(), "foundry-sql-bypass-"));
+    const path = join(directory, "events.sqlite");
+    const journal = new SQLiteJournal(path);
+    let external: DatabaseSync | undefined;
+    try {
+      journal.append("ticket", "TICKET_CREATED", "human:owner", {
+        title: "Access boundary",
+      });
+      const forged = makeEvent(
+        "ticket",
+        "MERGE_AUTHORIZED",
+        "human:123",
+        { implementation_id: "forged" },
+      );
+      external = new DatabaseSync(path);
+      external
+        .prepare(
+          "INSERT INTO events(event_id,ticket_id,event_json) VALUES (?,?,?)",
+        )
+        .run(forged.event_id, "ticket", JSON.stringify(forged));
+      expect(journal.read("ticket").at(-1)).toEqual(forged);
+    } finally {
+      external?.close();
+      journal.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("rejects direct updates and deletes through a separate database connection", () => {
     const directory = mkdtempSync(join(tmpdir(), "foundry-tamper-"));
     const path = join(directory, "events.sqlite");
