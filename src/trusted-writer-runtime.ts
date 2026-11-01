@@ -1,4 +1,5 @@
 import type { Server } from "node:net";
+import { chmodSync, chownSync } from "node:fs";
 import {
   assertSocketPathUnused,
   captureOwnedSocket,
@@ -25,8 +26,9 @@ export async function startTrustedWriterRuntime(
   databasePath: string,
   socketPath: string,
   handler: TrustedMergeRequestHandler,
+  bridgeGid?: number,
 ): Promise<TrustedWriterRuntime> {
-  assertTrustedWriterFilesystem(databasePath, socketPath);
+  assertTrustedWriterFilesystem(databasePath, socketPath, bridgeGid);
   assertSocketPathUnused(socketPath);
   const server = createIsolatedMergeSocketServer(socketPath, handler);
   try {
@@ -41,6 +43,15 @@ export async function startTrustedWriterRuntime(
     if (server.listening) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
+    throw error;
+  }
+  try {
+    if (bridgeGid !== undefined) {
+      chownSync(socketPath, process.getuid!(), bridgeGid);
+      chmodSync(socketPath, 0o660);
+    }
+  } catch (error) {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
     throw error;
   }
   const ownedSocket = captureOwnedSocket(socketPath);

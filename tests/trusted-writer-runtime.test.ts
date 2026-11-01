@@ -1,5 +1,6 @@
 import {
   chmodSync,
+  lstatSync,
   mkdtempSync,
   mkdirSync,
   rmSync,
@@ -15,6 +16,39 @@ import type { State } from "../src/domain.ts";
 describe.skipIf(process.platform !== "linux" || process.getuid?.() === 0)(
   "trusted writer runtime",
   () => {
+    it("allows an explicitly group-scoped writer IPC socket without exposing the database", async () => {
+      const root = mkdtempSync(join(tmpdir(), "foundry-shared-writer-"));
+      const dbDir = join(root, "db");
+      const ipcDir = join(root, "ipc");
+      const db = join(dbDir, "events.sqlite");
+      const socket = join(ipcDir, "writer.sock");
+      const gid = process.getgid!();
+      try {
+        mkdirSync(dbDir, { mode: 0o700 });
+        mkdirSync(ipcDir, { mode: 0o710 });
+        chmodSync(dbDir, 0o700);
+        chmodSync(ipcDir, 0o710);
+        writeFileSync(db, "", { mode: 0o600 });
+        chmodSync(db, 0o600);
+        const runtime = await startTrustedWriterRuntime(
+          db,
+          socket,
+          async () => ({ ticket_id: "ticket" }) as State,
+          gid,
+        );
+        try {
+          expect(lstatSync(socket).mode & 0o7777).toBe(0o660);
+          expect(lstatSync(socket).gid).toBe(gid);
+          expect(lstatSync(dbDir).mode & 0o7777).toBe(0o700);
+          expect(lstatSync(db).mode & 0o7777).toBe(0o600);
+        } finally {
+          await runtime.close();
+        }
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+
     it("starts only with private storage and serves bounded requests", async () => {
       const root = mkdtempSync(join(tmpdir(), "foundry-runtime-"));
       const dbDir = join(root, "db");
