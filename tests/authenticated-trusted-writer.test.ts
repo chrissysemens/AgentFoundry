@@ -35,7 +35,7 @@ describe.skipIf(process.platform !== "linux" || process.getuid?.() === 0)(
             db,
             socket,
             secretFile,
-            async () => ({} as State),
+            async () => ({}) as State,
           ),
         ).rejects.toThrow("private writer-owned file");
       } finally {
