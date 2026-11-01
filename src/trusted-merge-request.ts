@@ -13,9 +13,7 @@ export interface TrustedMergeRequest {
   readonly operation: "authorize-merge";
 }
 
-export type TrustedMergeRequestHandler = (
-  request: unknown,
-) => Promise<State>;
+export type TrustedMergeRequestHandler = (request: unknown) => Promise<State>;
 
 export function createTrustedMergeRequestHandler(
   service: TrustedMergeService,

@@ -18,7 +18,9 @@ describe("trusted merge request surface", () => {
       "FOUND-002",
       resolve,
     );
-    await expect(handler({ operation: "authorize-merge" })).resolves.toBe(result);
+    await expect(handler({ operation: "authorize-merge" })).resolves.toBe(
+      result,
+    );
     expect(authorizeMerge).toHaveBeenCalledWith("FOUND-002", "human:123", {
       implementation_id: "implementation",
       code_revision: "commit",
@@ -36,12 +38,17 @@ describe("trusted merge request surface", () => {
       resolve,
     );
     for (const request of [
-      null, [], {}, { operation: "append" },
+      null,
+      [],
+      {},
+      { operation: "append" },
       { operation: "authorize-merge", ticket: "other" },
       { operation: "authorize-merge", actor: "human:forged" },
       { operation: "authorize-merge", payload: { code_revision: "forged" } },
     ]) {
-      await expect(handler(request)).rejects.toThrow("Invalid trusted merge request");
+      await expect(handler(request)).rejects.toThrow(
+        "Invalid trusted merge request",
+      );
     }
     expect(resolve).not.toHaveBeenCalled();
     expect(authorizeMerge).not.toHaveBeenCalled();
@@ -52,9 +59,13 @@ describe("trusted merge request surface", () => {
     const handler = createTrustedMergeRequestHandler(
       { authorizeMerge } as unknown as TrustedMergeService,
       "FOUND-002",
-      async () => { throw new Error("Evidence unavailable"); },
+      async () => {
+        throw new Error("Evidence unavailable");
+      },
     );
-    await expect(handler({ operation: "authorize-merge" })).rejects.toThrow("Evidence unavailable");
+    await expect(handler({ operation: "authorize-merge" })).rejects.toThrow(
+      "Evidence unavailable",
+    );
     expect(authorizeMerge).not.toHaveBeenCalled();
   });
 });
