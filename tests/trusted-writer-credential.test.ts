@@ -1,4 +1,10 @@
-import { chmodSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -37,7 +43,9 @@ describe("trusted writer credential file", () => {
       const path = join(root, "credential");
       writeFileSync(path, "a".repeat(64), { mode: 0o600 });
       chmodSync(path, 0o644);
-      expect(() => readTrustedWriterCredential(path)).toThrow("private writer-owned");
+      expect(() => readTrustedWriterCredential(path)).toThrow(
+        "private writer-owned",
+      );
       chmodSync(path, 0o600);
       writeFileSync(path, "not-a-secret");
       expect(() => readTrustedWriterCredential(path)).toThrow("32 bytes");
