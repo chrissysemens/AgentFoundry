@@ -8,9 +8,11 @@ import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
   chownSync,
+  cpSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -56,6 +58,7 @@ if (
 
 const root = mkdtempSync(join(tmpdir(), "af-writer-bridge-"));
 const dbDir = join(root, "db");
+const stagedSource = join(root, "source");
 const writerDir = join(root, "writer-ipc");
 const bridgeDir = join(root, "bridge-ipc");
 const secretDir = join(root, "bridge-secret");
@@ -65,13 +68,13 @@ const bridgeSocket = join(bridgeDir, "bridge.sock");
 const secretPath = join(secretDir, "credential");
 const credential = "b".repeat(64); // disposable test-only credential
 const writerModule = pathToFileURL(
-  resolve("src/trusted-writer-runtime.ts"),
+  join(stagedSource, "trusted-writer-runtime.ts"),
 ).href;
 const authModule = pathToFileURL(
-  resolve("src/authenticated-merge-ipc.ts"),
+  join(stagedSource, "authenticated-merge-ipc.ts"),
 ).href;
 const bridgeModule = pathToFileURL(
-  resolve("src/cross-uid-merge-bridge.ts"),
+  join(stagedSource, "cross-uid-merge-bridge.ts"),
 ).href;
 const children = [];
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -221,6 +224,22 @@ function negativeSql(uid, gid) {
 
 try {
   chmodSync(root, 0o711);
+  // Source checkout permissions are runner-specific. Stage only the application
+  // modules in a disposable, root-owned read-only tree traversable by test UIDs.
+  cpSync(resolve("src"), stagedSource, { recursive: true });
+  function makeSourceReadable(directory) {
+    chmodSync(directory, 0o755);
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      if (entry.isSymbolicLink()) {
+        throw new Error("Refusing symlink in staged source: " + path);
+      }
+      if (entry.isDirectory()) makeSourceReadable(path);
+      else if (entry.isFile()) chmodSync(path, 0o644);
+      else throw new Error("Unexpected source entry: " + path);
+    }
+  }
+  makeSourceReadable(stagedSource);
   for (const [path, uid, gid, mode] of [
     [dbDir, writerUid, bridgeGid, 0o700],
     [writerDir, writerUid, bridgeGid, 0o710],
