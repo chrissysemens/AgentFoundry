@@ -65,7 +65,9 @@ export async function requestAuthenticatedMerge(
         socket.end();
         resolve(result.state);
       } catch (error) {
-        fail(error instanceof Error ? error : new Error("Invalid IPC response"));
+        fail(
+          error instanceof Error ? error : new Error("Invalid IPC response"),
+        );
       }
     });
     socket.on("error", fail);
