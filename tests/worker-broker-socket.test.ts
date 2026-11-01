@@ -23,7 +23,8 @@ describe.skipIf(!runnable)("worker-facing broker socket", () => {
     const handler = createWorkerBrokerHandler(credential, async () => ({
       forwarded: true,
     }));
-    let runtime: Awaited<ReturnType<typeof startWorkerBrokerSocket>> | undefined;
+    let runtime:
+      Awaited<ReturnType<typeof startWorkerBrokerSocket>> | undefined;
     const send = (request: unknown) =>
       new Promise<{ ok: boolean }>((resolve, reject) => {
         const client = createConnection(socketPath);
