@@ -39,16 +39,24 @@ export function createIsolatedMergeSocketServer(
         try {
           const request: unknown = JSON.parse(input.slice(0, newline));
           const state = await handler(request);
-          socket.end(JSON.stringify({ ok: true, state }) + "\n");
+          const response = JSON.stringify({ ok: true, state }) + "\n";
+          if (Buffer.byteLength(response, "utf8") > 65_536) {
+            throw new Error("Writer IPC response too large");
+          }
+          if (!socket.destroyed) socket.end(response);
         } catch {
-          socket.end(
-            JSON.stringify({ ok: false, error: "Request rejected" }) + "\n",
-          );
+          if (!socket.destroyed) {
+            socket.end(
+              JSON.stringify({ ok: false, error: "Request rejected" }) + "\n",
+            );
+          }
         }
       })();
     });
     socket.on("error", () => undefined);
   });
+  // Bound concurrent sockets to avoid unbounded idle-client accumulation.
+  server.maxConnections = 32;
   server.on("listening", () => {
     chmodSync(socketPath, 0o600);
   });

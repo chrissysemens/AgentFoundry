@@ -52,6 +52,38 @@ describe.skipIf(process.platform === "win32")(
       }
     });
 
+    it("rejects oversized handler output", async () => {
+      const dir = mkdtempSync(join(tmpdir(), "foundry-ipc-limits-"));
+      const path = join(dir, "writer.sock");
+      const server = createIsolatedMergeSocketServer(
+        path,
+        async () => ({ large: "x".repeat(70_000) }) as unknown as State,
+      );
+      try {
+        expect(server.maxConnections).toBe(32);
+        await new Promise<void>((resolve) => server.listen(path, resolve));
+        const response = await new Promise<string>((resolve, reject) => {
+          const client = createConnection(path);
+          let received = "";
+          client.on("connect", () => {
+            client.write(
+              JSON.stringify({ operation: "authorize-merge" }) + "\n",
+            );
+          });
+          client.on("data", (chunk: Buffer) => {
+            received += chunk.toString("utf8");
+          });
+          client.on("end", () => resolve(received));
+          client.on("error", reject);
+        });
+        expect(Buffer.byteLength(response)).toBeLessThan(65_536);
+        expect(JSON.parse(response).ok).toBe(false);
+      } finally {
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     it("refuses an existing socket path", async () => {
       const dir = mkdtempSync(join(tmpdir(), "foundry-ipc-existing-"));
       const path = join(dir, "writer.sock");
