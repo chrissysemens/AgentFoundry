@@ -152,13 +152,7 @@ function probe(
   `;
   const result = spawnSync(
     process.execPath,
-    [
-      "--input-type=module",
-      "-e",
-      source,
-      socket,
-      JSON.stringify(payload),
-    ],
+    ["--input-type=module", "-e", source, socket, JSON.stringify(payload)],
     {
       uid,
       gid,
