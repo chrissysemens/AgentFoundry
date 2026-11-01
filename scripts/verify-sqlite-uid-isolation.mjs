@@ -44,7 +44,15 @@ const path = process.argv[1];
 const outcomes = [];
 function denied(name, action) {
   try { action(); outcomes.push(name + ": UNEXPECTED SUCCESS"); }
-  catch { outcomes.push(name + ": denied"); }
+  catch (error) {
+    const code = error?.code;
+    if (code !== "EACCES" && code !== "EPERM" &&
+        code !== "SQLITE_CANTOPEN" && code !== "SQLITE_READONLY") {
+      outcomes.push(name + ": INCONCLUSIVE (" + String(code ?? "unknown") + ")");
+    } else {
+      outcomes.push(name + ": denied (" + code + ")");
+    }
+  }
 }
 denied("direct SQL insert", () => {
   const db = new DatabaseSync(path);
@@ -75,7 +83,7 @@ denied("create sibling", () => {
   const fd = openSync(path + ".untrusted-create", "wx"); closeSync(fd);
 });
 for (const outcome of outcomes) console.log(outcome);
-if (outcomes.some((line) => line.includes("UNEXPECTED SUCCESS"))) process.exit(1);
+if (outcomes.some((line) => line.includes("UNEXPECTED SUCCESS") || line.includes("INCONCLUSIVE"))) process.exit(1);
 `;
 const result = spawnSync(
   process.execPath,
@@ -90,7 +98,12 @@ const result = spawnSync(
 );
 process.stdout.write(result.stdout ?? "");
 process.stderr.write(result.stderr ?? "");
-if (result.error || result.status !== 0) {
+if (
+  result.error ||
+  result.status !== 0 ||
+  !result.stdout?.includes("direct SQL insert: denied") ||
+  !result.stdout?.includes("database write descriptor: denied")
+) {
   throw Error("Untrusted UID isolation test failed or could not run");
 }
 console.log("Untrusted UID denied SQLite and directory mutations");
