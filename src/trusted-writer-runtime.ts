@@ -1,6 +1,7 @@
 import type { Server } from "node:net";
 import {
   assertSocketPathUnused,
+  captureOwnedSocket,
   createIsolatedMergeSocketServer,
   removeOwnedSocket,
 } from "./isolated-merge-ipc.ts";
@@ -42,6 +43,7 @@ export async function startTrustedWriterRuntime(
     }
     throw error;
   }
+  const ownedSocket = captureOwnedSocket(socketPath);
   let closed = false;
   return {
     server,
@@ -57,7 +59,7 @@ export async function startTrustedWriterRuntime(
       // Node normally removes its Unix socket on close. Only remove a
       // remaining socket inode; never remove a replaced regular file.
       try {
-        removeOwnedSocket(socketPath);
+        removeOwnedSocket(socketPath, ownedSocket);
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
       }
