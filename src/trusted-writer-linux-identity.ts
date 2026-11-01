@@ -41,7 +41,11 @@ export function assertTrustedWriterLinuxIdentity(
     ["socket directory", dirname(socket)],
   ] as const) {
     const info = lstatSync(path);
-    if (info.isSymbolicLink() || info.uid !== uid || (info.mode & 0o077) !== 0) {
+    if (
+      info.isSymbolicLink() ||
+      info.uid !== uid ||
+      (info.mode & 0o077) !== 0
+    ) {
       throw new Error(`Unsafe ${name} ownership or permissions`);
     }
     if (name === "database" ? !info.isFile() : !info.isDirectory()) {
