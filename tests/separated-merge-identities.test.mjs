@@ -40,26 +40,52 @@ const stat = (p) => {
   return info;
 };
 
-describe.skipIf(process.platform !== "linux")("separated merge identities preflight", () => {
-  it("accepts a strictly separated layout", () => {
-    expect(checkSeparatedMergeIdentities(paths, ids, stat)).toBe(true);
-  });
-  it("rejects a bridge sharing the writer UID", () => {
-    expect(() => checkSeparatedMergeIdentities(paths, { ...ids, bridgeUid: ids.writerUid }, stat)).toThrow();
-  });
-  it("rejects a worker sharing the bridge UID", () => {
-    expect(() => checkSeparatedMergeIdentities(paths, { ...ids, workerUid: ids.bridgeUid }, stat)).toThrow();
-  });
-  it("rejects a writer socket in a private 0700 directory", () => {
-    const badStat = (p) => p === "/writer-ipc" ? inode("directory", 1101, 1201, 0o700) : stat(p);
-    expect(() => checkSeparatedMergeIdentities(paths, ids, badStat)).toThrow();
-  });
-  it("rejects world-accessible bridge sockets", () => {
-    const badStat = (p) => p === paths.bridgeSocket ? inode("socket", 1102, 1202, 0o666) : stat(p);
-    expect(() => checkSeparatedMergeIdentities(paths, ids, badStat)).toThrow();
-  });
-  it("rejects a symlinked database", () => {
-    const badStat = (p) => p === paths.database ? { ...stat(p), isSymbolicLink: () => true } : stat(p);
-    expect(() => checkSeparatedMergeIdentities(paths, ids, badStat)).toThrow();
-  });
-});
+describe.skipIf(process.platform !== "linux")(
+  "separated merge identities preflight",
+  () => {
+    it("accepts a strictly separated layout", () => {
+      expect(checkSeparatedMergeIdentities(paths, ids, stat)).toBe(true);
+    });
+    it("rejects a bridge sharing the writer UID", () => {
+      expect(() =>
+        checkSeparatedMergeIdentities(
+          paths,
+          { ...ids, bridgeUid: ids.writerUid },
+          stat,
+        ),
+      ).toThrow();
+    });
+    it("rejects a worker sharing the bridge UID", () => {
+      expect(() =>
+        checkSeparatedMergeIdentities(
+          paths,
+          { ...ids, workerUid: ids.bridgeUid },
+          stat,
+        ),
+      ).toThrow();
+    });
+    it("rejects a writer socket in a private 0700 directory", () => {
+      const badStat = (p) =>
+        p === "/writer-ipc" ? inode("directory", 1101, 1201, 0o700) : stat(p);
+      expect(() =>
+        checkSeparatedMergeIdentities(paths, ids, badStat),
+      ).toThrow();
+    });
+    it("rejects world-accessible bridge sockets", () => {
+      const badStat = (p) =>
+        p === paths.bridgeSocket ? inode("socket", 1102, 1202, 0o666) : stat(p);
+      expect(() =>
+        checkSeparatedMergeIdentities(paths, ids, badStat),
+      ).toThrow();
+    });
+    it("rejects a symlinked database", () => {
+      const badStat = (p) =>
+        p === paths.database
+          ? { ...stat(p), isSymbolicLink: () => true }
+          : stat(p);
+      expect(() =>
+        checkSeparatedMergeIdentities(paths, ids, badStat),
+      ).toThrow();
+    });
+  },
+);

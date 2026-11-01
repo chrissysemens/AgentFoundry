@@ -18,7 +18,9 @@ export function checkSeparatedMergeIdentities(paths, ids, stat = lstatSync) {
     new Set([writerUid, bridgeUid, workerUid]).size !== 3 ||
     bridgeGid === workerGid
   ) {
-    throw new Error("Distinct non-root writer, bridge and worker identities required");
+    throw new Error(
+      "Distinct non-root writer, bridge and worker identities required",
+    );
   }
   const files = [database, writerSocket, bridgeSocket, bridgeSecret];
   if (files.some((p) => typeof p !== "string" || !p.startsWith("/"))) {
@@ -32,7 +34,11 @@ export function checkSeparatedMergeIdentities(paths, ids, stat = lstatSync) {
     const info = stat(path);
     if (
       info.isSymbolicLink() ||
-      !(kind === "file" ? info.isFile() : kind === "socket" ? info.isSocket() : info.isDirectory()) ||
+      !(kind === "file"
+        ? info.isFile()
+        : kind === "socket"
+          ? info.isSocket()
+          : info.isDirectory()) ||
       info.uid !== uid ||
       (gid !== null && info.gid !== gid) ||
       (info.mode & 0o7777) !== mode
@@ -50,15 +56,24 @@ export function checkSeparatedMergeIdentities(paths, ids, stat = lstatSync) {
   return true;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
-  const [database, writerSocket, bridgeSocket, bridgeSecret, ...rawIds] = process.argv.slice(2);
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === new URL(import.meta.url).pathname
+) {
+  const [database, writerSocket, bridgeSocket, bridgeSecret, ...rawIds] =
+    process.argv.slice(2);
   if (rawIds.length !== 5 || rawIds.some((s) => !/^[1-9][0-9]*$/.test(s))) {
-    throw new Error("Usage: DB WRITER_SOCKET BRIDGE_SOCKET BRIDGE_SECRET WRITER_UID BRIDGE_UID WORKER_UID BRIDGE_GID WORKER_GID");
+    throw new Error(
+      "Usage: DB WRITER_SOCKET BRIDGE_SOCKET BRIDGE_SECRET WRITER_UID BRIDGE_UID WORKER_UID BRIDGE_GID WORKER_GID",
+    );
   }
-  const [writerUid, bridgeUid, workerUid, bridgeGid, workerGid] = rawIds.map(Number);
+  const [writerUid, bridgeUid, workerUid, bridgeGid, workerGid] =
+    rawIds.map(Number);
   checkSeparatedMergeIdentities(
     { database, writerSocket, bridgeSocket, bridgeSecret },
     { writerUid, bridgeUid, workerUid, bridgeGid, workerGid },
   );
-  console.log("PASS: separated writer/bridge/worker filesystem layout (not runtime isolation)");
+  console.log(
+    "PASS: separated writer/bridge/worker filesystem layout (not runtime isolation)",
+  );
 }
