@@ -5,7 +5,15 @@ import type { AuthenticatedGitHubGet } from "./github-readonly-gateway.ts";
  * Token provisioning and network policy remain deployment responsibilities.
  */
 export function createTrustedGitHubGet(token: string): AuthenticatedGitHubGet {
-  if (!/^[^\s\x00-\x1f\x7f]+$/.test(token)) {
+  if (
+    !token ||
+    [...token].some(
+      (character) =>
+        character.trim() === "" ||
+        character.charCodeAt(0) < 32 ||
+        character.charCodeAt(0) === 127,
+    )
+  ) {
     throw new Error("Nonempty GitHub token required");
   }
   return async (path) => {
