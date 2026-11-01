@@ -60,7 +60,11 @@ export function parseTrustedWriterBootstrapConfig(
   }
   for (const field of ["issueNumber", "commentId"]) {
     const value = data[field];
-    if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+    if (
+      typeof value !== "number" ||
+      !Number.isSafeInteger(value) ||
+      value <= 0
+    ) {
       throw new Error(`Positive safe integer ${field} required`);
     }
   }
@@ -68,7 +72,8 @@ export function parseTrustedWriterBootstrapConfig(
     !Array.isArray(data.allowedHumanIds) ||
     data.allowedHumanIds.length === 0 ||
     !data.allowedHumanIds.every(
-      (id: unknown) => typeof id === "number" && Number.isSafeInteger(id) && id > 0,
+      (id: unknown) =>
+        typeof id === "number" && Number.isSafeInteger(id) && id > 0,
     ) ||
     new Set(data.allowedHumanIds).size !== data.allowedHumanIds.length
   ) {

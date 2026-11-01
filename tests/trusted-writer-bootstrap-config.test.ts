@@ -34,7 +34,10 @@ describe("trusted writer bootstrap configuration", () => {
       }),
     ).toThrow("must be distinct");
     expect(() =>
-      parseTrustedWriterBootstrapConfig({ ...valid, socketPath: "writer.sock" }),
+      parseTrustedWriterBootstrapConfig({
+        ...valid,
+        socketPath: "writer.sock",
+      }),
     ).toThrow("Absolute");
   });
 
@@ -43,7 +46,10 @@ describe("trusted writer bootstrap configuration", () => {
       parseTrustedWriterBootstrapConfig({ ...valid, repository: "project" }),
     ).toThrow("repository and ticket");
     expect(() =>
-      parseTrustedWriterBootstrapConfig({ ...valid, allowedHumanIds: [101, 101] }),
+      parseTrustedWriterBootstrapConfig({
+        ...valid,
+        allowedHumanIds: [101, 101],
+      }),
     ).toThrow("Unique trusted human IDs");
     expect(() =>
       parseTrustedWriterBootstrapConfig({ ...valid, commentId: 0 }),
