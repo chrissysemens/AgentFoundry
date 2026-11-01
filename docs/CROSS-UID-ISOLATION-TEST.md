@@ -30,7 +30,7 @@ Each run must deny: direct forged `MERGE_AUTHORIZED` SQL insertion, opening
 the database for writing, database rename and delete, creating a sibling file,
 and creating or writing SQLite `-wal` and `-shm` files. Existing WAL/SHM
 files are tested for writing if present; attempts on absent files must also
-fail. A single unexpected success fails the command.
+fail. A single unexpected success fails the command. The harness also fails closed\nwhen a probe throws an unexpected error (for example, a malformed SQL statement)\ninstead of an OS or SQLite access-denial error. Such results are reported as\n`INCONCLUSIVE` and must be investigated rather than counted as isolation proof.
 
 **Capture evidence** for the exact image/commit, filesystem ownership and
 permissions, UID/GID mapping, container mount configuration, command output
@@ -46,3 +46,13 @@ connectivity. Run service-level restart, concurrency and verified-evidence
 tests separately, and obtain an independent security review.
 
 **Do not enable autonomous merging merely because these checks pass.**
+
+## Interpretation
+
+A passing negative test demonstrates only that the tested untrusted UID/GID
+could not perform the listed mutations in that specific disposable deployment.
+It does **not** prove that a cross-UID client can connect to the trusted
+writer. The writer currently uses a private socket directory and restrictive
+socket permissions; do not loosen them just to make a connectivity test pass.
+A separate authenticated and OS-authorized IPC deployment design is needed
+before a positive cross-UID request test can be meaningful.
