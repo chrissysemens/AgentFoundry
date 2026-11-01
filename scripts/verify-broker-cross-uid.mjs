@@ -38,23 +38,29 @@ if (
 const root = mkdtempSync(join(tmpdir(), "af-cross-uid-broker-"));
 const dir = join(root, "public");
 const socketPath = join(dir, "broker.sock");
-const moduleUrl = pathToFileURL(
-  resolve("src/worker-broker-socket.ts"),
-).href;
-const handlerUrl = pathToFileURL(
-  resolve("src/worker-broker-request.ts"),
-).href;
+const moduleUrl = pathToFileURL(resolve("src/worker-broker-socket.ts")).href;
+const handlerUrl = pathToFileURL(resolve("src/worker-broker-request.ts")).href;
 const credential = "a".repeat(64);
 let broker;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function child(source, uid, gid, args = []) {
-  return spawn(process.execPath, ["--experimental-strip-types", "--input-type=module", "-e", source, ...args], {
-    uid,
-    gid,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { PATH: process.env.PATH ?? "/usr/bin" },
-  });
+  return spawn(
+    process.execPath,
+    [
+      "--experimental-strip-types",
+      "--input-type=module",
+      "-e",
+      source,
+      ...args,
+    ],
+    {
+      uid,
+      gid,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { PATH: process.env.PATH ?? "/usr/bin" },
+    },
+  );
 }
 async function runProbe(uid, gid, payload, expectSuccess) {
   const code = `
@@ -77,7 +83,10 @@ async function runProbe(uid, gid, payload, expectSuccess) {
       process.exit(["EACCES", "EPERM"].includes(error.code) ? 13 : 6);
     });
   `;
-  const processChild = child(code, uid, gid, [socketPath, JSON.stringify(payload)]);
+  const processChild = child(code, uid, gid, [
+    socketPath,
+    JSON.stringify(payload),
+  ]);
   const exitCode = await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       processChild.kill("SIGKILL");
@@ -94,7 +103,9 @@ async function runProbe(uid, gid, payload, expectSuccess) {
   });
   const expected = expectSuccess ? 0 : 13;
   if (exitCode !== expected) {
-    throw new Error(`Cross-UID probe expected exit ${expected}, got ${exitCode}`);
+    throw new Error(
+      `Cross-UID probe expected exit ${expected}, got ${exitCode}`,
+    );
   }
 }
 try {
@@ -111,7 +122,9 @@ try {
   `;
   broker = child(source, brokerUid, sharedGid);
   let stderr = "";
-  broker.stderr.on("data", (data) => { stderr += data.toString(); });
+  broker.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
   for (let i = 0; i < 60; i++) {
     if (broker.exitCode !== null) throw new Error("Broker exited: " + stderr);
     try {
@@ -121,9 +134,20 @@ try {
     }
     await sleep(50);
   }
-  if (!lstatSync(socketPath).isSocket()) throw new Error("Broker did not listen");
-  await runProbe(workerUid, sharedGid, { credential, operation: "authorize-merge" }, true);
-  await runProbe(outsiderUid, outsiderGid, { credential, operation: "authorize-merge" }, false);
+  if (!lstatSync(socketPath).isSocket())
+    throw new Error("Broker did not listen");
+  await runProbe(
+    workerUid,
+    sharedGid,
+    { credential, operation: "authorize-merge" },
+    true,
+  );
+  await runProbe(
+    outsiderUid,
+    outsiderGid,
+    { credential, operation: "authorize-merge" },
+    false,
+  );
   console.log("PASS: worker connected; outsider denied by OS permissions");
 } finally {
   if (broker && broker.exitCode === null) broker.kill("SIGKILL");
