@@ -5,8 +5,7 @@ connects to a writer-owned private Unix socket and passes **only that
 connected socket descriptor** to a separately identified broker child
 through inherited file descriptor 3.
 
-The writer socket remains in a 0700 writer-owned directory, with mode
-0600. The broker's direct connection attempt must fail with EACCES or
+The writer socket remains in a 0700 writer-owned directory, with mode 0600. The broker's direct connection attempt must fail with EACCES or
 EPERM. The broker then exchanges a fixed **inert ping** over the
 supervisor-provisioned connected descriptor.
 

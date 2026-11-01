@@ -6,7 +6,14 @@
  * This is a transport probe, NOT an authenticated merge writer.
  */
 import { spawn } from "node:child_process";
-import { chmodSync, chownSync, lstatSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import {
+  chmodSync,
+  chownSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+} from "node:fs";
 import { createConnection } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,11 +25,15 @@ if (
   raw.length !== 4 ||
   raw.some((id) => !/^[1-9][0-9]*$/.test(id))
 ) {
-  throw Error("Root Linux required: WRITER_UID WRITER_GID BROKER_UID BROKER_GID");
+  throw Error(
+    "Root Linux required: WRITER_UID WRITER_GID BROKER_UID BROKER_GID",
+  );
 }
 const [writerUid, writerGid, brokerUid, brokerGid] = raw.map(Number);
 if (
-  [writerUid, writerGid, brokerUid, brokerGid].some((id) => !Number.isSafeInteger(id)) ||
+  [writerUid, writerGid, brokerUid, brokerGid].some(
+    (id) => !Number.isSafeInteger(id),
+  ) ||
   writerUid === brokerUid
 ) {
   throw Error("Distinct writer and broker UIDs required");
@@ -48,15 +59,21 @@ function launch(source, uid, gid, args = [], extraStdio = []) {
 async function finished(child, timeoutMs = 5000) {
   return await new Promise((resolve, reject) => {
     let stderr = "";
-    child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
       reject(Error("Child timed out: " + stderr));
     }, timeoutMs);
-    child.once("error", (error) => { clearTimeout(timer); reject(error); });
+    child.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
     child.once("exit", (code, signal) => {
       clearTimeout(timer);
-      if (signal || code !== 0) reject(Error("Child failed: " + code + " " + stderr));
+      if (signal || code !== 0)
+        reject(Error("Child failed: " + code + " " + stderr));
       else resolve();
     });
   });
@@ -86,7 +103,9 @@ try {
   `;
   writer = launch(writerSource, writerUid, writerGid, [socketPath]);
   let writerError = "";
-  writer.stderr.on("data", (chunk) => { writerError += chunk.toString(); });
+  writer.stderr.on("data", (chunk) => {
+    writerError += chunk.toString();
+  });
   let ready = false;
   for (let attempt = 0; attempt < 80; attempt++) {
     if (writer.exitCode !== null) throw Error("Writer failed: " + writerError);
@@ -104,7 +123,8 @@ try {
   if (!ready) throw Error("Writer socket not ready: " + writerError);
 
   // Broker cannot open the writer's private pathname.
-  const directProbe = launch(`
+  const directProbe = launch(
+    `
     import { createConnection } from "node:net";
     const socket = createConnection(process.argv[1]);
     const timer = setTimeout(() => process.exit(9), 2000);
@@ -113,7 +133,11 @@ try {
       clearTimeout(timer);
       process.exit(["EACCES", "EPERM"].includes(error.code) ? 0 : 7);
     });
-  `, brokerUid, brokerGid, [socketPath]);
+  `,
+    brokerUid,
+    brokerGid,
+    [socketPath],
+  );
   await finished(directProbe);
 
   // Privileged supervisor connects; only the connected socket descriptor is
@@ -124,7 +148,8 @@ try {
     connection.once("connect", resolve);
     connection.once("error", reject);
   });
-  const broker = launch(`
+  const broker = launch(
+    `
     import { Socket } from "node:net";
     const socket = new Socket({ fd: 3, readable: true, writable: true });
     let response = "";
@@ -138,9 +163,16 @@ try {
     });
     socket.on("error", () => { clearTimeout(timer); process.exit(6); });
     socket.write('{"operation":"ping"}\\n');
-  `, brokerUid, brokerGid, [], [connection]);
+  `,
+    brokerUid,
+    brokerGid,
+    [],
+    [connection],
+  );
   await finished(broker);
-  console.log("PASS: direct broker path denied; supervisor-passed connected FD worked");
+  console.log(
+    "PASS: direct broker path denied; supervisor-passed connected FD worked",
+  );
 } finally {
   connection?.destroy();
   if (writer && writer.exitCode === null) writer.kill("SIGKILL");
