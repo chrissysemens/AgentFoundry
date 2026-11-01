@@ -20,6 +20,7 @@ to make integration work**. Design and independently review authorized
 cross-UID communication and peer identity before doing so.
 
 Production readiness also requires:
+
 - Actual writer-only SQLite volume and WAL/SHM permissions, including
   containers, backups and restore paths.
 - Independently provisioned and rotated IPC credentials.

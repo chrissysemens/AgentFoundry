@@ -10,7 +10,7 @@ describe("trusted writer process startup", () => {
         "/tmp/foundry-missing-db/events.sqlite",
         "/tmp/foundry-missing-socket/writer.sock",
         "/tmp/foundry-missing-credential",
-        async () => ({} as State),
+        async () => ({}) as State,
       ),
     ).rejects.toThrow();
     expect(process.listenerCount("SIGTERM")).toBe(before);
