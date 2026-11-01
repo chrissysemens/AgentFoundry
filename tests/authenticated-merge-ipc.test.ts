@@ -40,8 +40,8 @@ describe("authenticated merge IPC", () => {
   });
 
   it("rejects weak or malformed startup secrets", () => {
-    expect(() => createAuthenticatedMergeHandler("password", async () => ({} as State))).toThrow(
-      "32 random bytes",
-    );
+    expect(() =>
+      createAuthenticatedMergeHandler("password", async () => ({} as State)),
+    ).toThrow("32 random bytes");
   });
 });
