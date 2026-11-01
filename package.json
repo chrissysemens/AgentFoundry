@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "verify": "npm run runtime:check && npm run format:check && npm run lint && npm run typecheck && npm test && npm run smoke",
-    "runtime:check": "node scripts/check-runtime.mjs"
+    "runtime:check": "node scripts/check-runtime.mjs && node scripts/check-broker-socket-dependency.mjs"
   },
   "engines": {
     "node": ">=24 <25"
