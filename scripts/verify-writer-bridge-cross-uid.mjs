@@ -6,7 +6,13 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import {
-  chmodSync, chownSync, lstatSync, mkdirSync, mkdtempSync, rmSync, writeFileSync,
+  chmodSync,
+  chownSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -20,17 +26,32 @@ if (
   raw.length !== 7 ||
   raw.some((s) => !/^[1-9][0-9]*$/.test(s))
 ) {
-  throw new Error("Linux root and seven positive numeric UID/GID arguments required");
+  throw new Error(
+    "Linux root and seven positive numeric UID/GID arguments required",
+  );
 }
 const ids = raw.map(Number);
-if (ids.some((n) => !Number.isSafeInteger(n))) throw new Error("Invalid identity");
-const [writerUid, bridgeUid, workerUid, outsiderUid, bridgeGid, workerGid, outsiderGid] = ids;
+if (ids.some((n) => !Number.isSafeInteger(n)))
+  throw new Error("Invalid identity");
+const [
+  writerUid,
+  bridgeUid,
+  workerUid,
+  outsiderUid,
+  bridgeGid,
+  workerGid,
+  outsiderGid,
+] = ids;
 if (
   new Set([writerUid, bridgeUid, workerUid, outsiderUid]).size !== 4 ||
   new Set([bridgeGid, workerGid, outsiderGid]).size !== 3 ||
-  [writerUid, bridgeUid, workerUid, outsiderUid].some((n) => ids.slice(4).includes(n))
+  [writerUid, bridgeUid, workerUid, outsiderUid].some((n) =>
+    ids.slice(4).includes(n),
+  )
 ) {
-  throw new Error("Require four distinct UIDs and three distinct non-overlapping GIDs");
+  throw new Error(
+    "Require four distinct UIDs and three distinct non-overlapping GIDs",
+  );
 }
 
 const root = mkdtempSync(join(tmpdir(), "af-writer-bridge-"));
@@ -43,23 +64,49 @@ const writerSocket = join(writerDir, "writer.sock");
 const bridgeSocket = join(bridgeDir, "bridge.sock");
 const secretPath = join(secretDir, "credential");
 const credential = "b".repeat(64); // disposable test-only credential
-const writerModule = pathToFileURL(resolve("src/trusted-writer-runtime.ts")).href;
-const authModule = pathToFileURL(resolve("src/authenticated-merge-ipc.ts")).href;
-const bridgeModule = pathToFileURL(resolve("src/cross-uid-merge-bridge.ts")).href;
+const writerModule = pathToFileURL(
+  resolve("src/trusted-writer-runtime.ts"),
+).href;
+const authModule = pathToFileURL(
+  resolve("src/authenticated-merge-ipc.ts"),
+).href;
+const bridgeModule = pathToFileURL(
+  resolve("src/cross-uid-merge-bridge.ts"),
+).href;
 const children = [];
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function spawnAs(source, uid, gid, args = []) {
   const child = spawn(
     process.execPath,
-    ["--experimental-strip-types", "--input-type=module", "-e", source, ...args],
-    { uid, gid, stdio: ["ignore", "pipe", "pipe"], env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" } },
+    [
+      "--experimental-strip-types",
+      "--input-type=module",
+      "-e",
+      source,
+      ...args,
+    ],
+    {
+      uid,
+      gid,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+    },
   );
   let stderr = "";
-  child.stderr.on("data", (data) => { stderr += data.toString(); });
-  child.on("error", (error) => { stderr += String(error); });
+  child.stderr.on("data", (data) => {
+    stderr += data.toString();
+  });
+  child.on("error", (error) => {
+    stderr += String(error);
+  });
   children.push(child);
-  return { child, get stderr() { return stderr; } };
+  return {
+    child,
+    get stderr() {
+      return stderr;
+    },
+  };
 }
 async function ready(proc, path) {
   for (let attempt = 0; attempt < 100; attempt++) {
@@ -98,21 +145,51 @@ function probe(uid, gid, socket, expected) {
   `;
   const result = spawnSync(
     process.execPath,
-    ["--input-type=module", "-e", source, socket, JSON.stringify({ operation: "authorize-merge" })],
-    { uid, gid, encoding: "utf8", timeout: 7000, env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" } },
+    [
+      "--input-type=module",
+      "-e",
+      source,
+      socket,
+      JSON.stringify({ operation: "authorize-merge" }),
+    ],
+    {
+      uid,
+      gid,
+      encoding: "utf8",
+      timeout: 7000,
+      env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+    },
   );
   if (result.error || result.status !== expected) {
-    throw new Error("Socket probe expected " + expected + ", got " + result.status + ": " + (result.stderr ?? result.error));
+    throw new Error(
+      "Socket probe expected " +
+        expected +
+        ", got " +
+        result.status +
+        ": " +
+        (result.stderr ?? result.error),
+    );
   }
 }
 function negativeSql(uid, gid) {
   const result = spawnSync(
     process.execPath,
-    ["scripts/verify-sqlite-uid-isolation.mjs", dbPath, String(uid), String(gid)],
-    { encoding: "utf8", timeout: 20000, env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" } },
+    [
+      "scripts/verify-sqlite-uid-isolation.mjs",
+      dbPath,
+      String(uid),
+      String(gid),
+    ],
+    {
+      encoding: "utf8",
+      timeout: 20000,
+      env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+    },
   );
   if (result.error || result.status !== 0) {
-    throw new Error("SQLite isolation failed: " + result.stdout + result.stderr);
+    throw new Error(
+      "SQLite isolation failed: " + result.stdout + result.stderr,
+    );
   }
 }
 
@@ -129,7 +206,9 @@ try {
     chmodSync(path, mode);
   }
   const db = new DatabaseSync(dbPath);
-  db.exec("CREATE TABLE events (event_id TEXT, ticket_id TEXT, event_json TEXT)");
+  db.exec(
+    "CREATE TABLE events (event_id TEXT, ticket_id TEXT, event_json TEXT)",
+  );
   db.close();
   chownSync(dbPath, writerUid, bridgeGid);
   chmodSync(dbPath, 0o600);
@@ -167,11 +246,16 @@ try {
   // Neither untrusted identity can mutate the journal or its directory.
   negativeSql(bridgeUid, workerGid);
   negativeSql(workerUid, workerGid);
-  console.log("PASS: worker->bridge->writer; denied direct IPC and SQLite mutation");
-  console.log("NOT PROVEN: human evidence, hostile bridge behavior, credential secrecy, restart/race resistance");
+  console.log(
+    "PASS: worker->bridge->writer; denied direct IPC and SQLite mutation",
+  );
+  console.log(
+    "NOT PROVEN: human evidence, hostile bridge behavior, credential secrecy, restart/race resistance",
+  );
 } finally {
   for (const child of children) {
-    if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+    if (child.exitCode === null && child.signalCode === null)
+      child.kill("SIGKILL");
   }
   rmSync(root, { recursive: true, force: true });
 }
