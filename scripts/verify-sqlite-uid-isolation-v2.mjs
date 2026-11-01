@@ -21,7 +21,9 @@ function positiveIdentity(value, name) {
   return number;
 }
 if (!rawPath) {
-  throw Error("Usage: verify-sqlite-uid-isolation.mjs DB_PATH UNTRUSTED_UID UNTRUSTED_GID");
+  throw Error(
+    "Usage: verify-sqlite-uid-isolation.mjs DB_PATH UNTRUSTED_UID UNTRUSTED_GID",
+  );
 }
 const uid = positiveIdentity(rawUid, "untrusted UID");
 const gid = positiveIdentity(rawGid, "untrusted GID");
@@ -29,7 +31,9 @@ const path = resolve(rawPath);
 const db = lstatSync(path);
 const dir = lstatSync(dirname(path));
 if (!db.isFile() || !dir.isDirectory() || db.uid === uid || dir.uid === uid) {
-  throw Error("Require existing SQLite file and directory owned by a different UID");
+  throw Error(
+    "Require existing SQLite file and directory owned by a different UID",
+  );
 }
 const snapshot = (file) => {
   try {
@@ -47,7 +51,13 @@ const snapshot = (file) => {
     throw error;
   }
 };
-const paths = [path, path + "-wal", path + "-shm", path + ".untrusted-rename", path + ".untrusted-create"];
+const paths = [
+  path,
+  path + "-wal",
+  path + "-shm",
+  path + ".untrusted-rename",
+  path + ".untrusted-create",
+];
 const before = paths.map(snapshot);
 const script = `
 import { DatabaseSync } from "node:sqlite";
@@ -99,20 +109,28 @@ denied("create sibling", () => {
 });
 if (failed) process.exitCode = 1;
 `;
-const result = spawnSync(process.execPath, ["--input-type=module", "-e", script, path], {
-  uid,
-  gid,
-  encoding: "utf8",
-  timeout: 15_000,
-  env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
-});
+const result = spawnSync(
+  process.execPath,
+  ["--input-type=module", "-e", script, path],
+  {
+    uid,
+    gid,
+    encoding: "utf8",
+    timeout: 15_000,
+    env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+  },
+);
 process.stdout.write(result.stdout ?? "");
 process.stderr.write(result.stderr ?? "");
 const after = paths.map(snapshot);
 if (JSON.stringify(before) !== JSON.stringify(after)) {
-  throw Error("SQLite isolation test changed protected files or created artifacts");
+  throw Error(
+    "SQLite isolation test changed protected files or created artifacts",
+  );
 }
 if (result.error || result.status !== 0) {
   throw Error("Untrusted UID isolation test failed or could not run");
 }
-console.log("Untrusted UID denied SQLite and directory mutations; file snapshots unchanged");
+console.log(
+  "Untrusted UID denied SQLite and directory mutations; file snapshots unchanged",
+);
