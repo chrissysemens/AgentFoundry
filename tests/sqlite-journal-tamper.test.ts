@@ -19,12 +19,9 @@ describe("SQLite journal tamper resistance", () => {
       journal.append("ticket", "TICKET_CREATED", "human:owner", {
         title: "Access boundary",
       });
-      const forged = makeEvent(
-        "ticket",
-        "MERGE_AUTHORIZED",
-        "human:123",
-        { implementation_id: "forged" },
-      );
+      const forged = makeEvent("ticket", "MERGE_AUTHORIZED", "human:123", {
+        implementation_id: "forged",
+      });
       external = new DatabaseSync(path);
       external
         .prepare(
