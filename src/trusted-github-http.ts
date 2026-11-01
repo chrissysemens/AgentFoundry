@@ -4,17 +4,18 @@ import type { AuthenticatedGitHubGet } from "./github-readonly-gateway.ts";
  * Narrow GitHub REST read transport for the trusted writer.
  * Token provisioning and network policy remain deployment responsibilities.
  */
-export function createTrustedGitHubGet(
-  token: string,
-): AuthenticatedGitHubGet {
+export function createTrustedGitHubGet(token: string): AuthenticatedGitHubGet {
   if (!/^[^\s\x00-\x1f\x7f]+$/.test(token)) {
     throw new Error("Nonempty GitHub token required");
   }
   return async (path) => {
+    const prefix = /^\/repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\//;
+    const suffix = path.replace(prefix, "");
+    const comment = /^issues\/comments\/[1-9][0-9]*$/;
+    const content = /^contents\/[A-Za-z0-9_.~%/-]+\?ref=[a-f0-9]{40}$/;
     if (
-      !/^\/repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/(?:issues\/comments\/[1-9][0-9]*|contents\/[A-Za-z0-9_.~%/-]+\?ref=[a-f0-9]{40})$/.test(
-        path,
-      ) ||
+      !prefix.test(path) ||
+      !(comment.test(suffix) || content.test(suffix)) ||
       path.includes("..") ||
       /%2f|%5c|%2e/i.test(path)
     ) {
