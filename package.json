@@ -6,6 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "smoke": "tsx tests/smoke.ts",
+    "issue": "node scripts/github-issue-intake.mjs",
+    "issue:test": "vitest run tests/github-issue-intake.test.mjs",
     "typecheck": "tsc --noEmit",
     "cli": "tsx src/cli.ts",
     "format": "prettier --write .",
