@@ -1,5 +1,6 @@
 import { SQLiteJournal } from "./journal.ts";
 import { assertTrustedWriterFilesystem } from "./trusted-writer-filesystem.ts";
+import { assertTrustedWriterLinuxIdentity } from "./trusted-writer-linux-identity.ts";
 import { createSignedGitHubMergeAuthorizationResolver } from "./github-merge-authorization.ts";
 import { createSignedGitHubTrustedMergeService } from "./trusted-merge-service.ts";
 import { createTrustedMergeRequestHandler } from "./trusted-merge-request.ts";
@@ -44,6 +45,7 @@ export async function runEvidenceBackedTrustedWriter(
   ) {
     throw new Error("Writer and SIP approval policy bindings differ");
   }
+  assertTrustedWriterLinuxIdentity(config.databasePath, config.socketPath);
   assertTrustedWriterFilesystem(config.databasePath, config.socketPath);
   const journal = new SQLiteJournal(config.databasePath, undefined, true);
   try {
