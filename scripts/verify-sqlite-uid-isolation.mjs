@@ -46,8 +46,17 @@ function denied(name, action) {
   try { action(); outcomes.push(name + ": UNEXPECTED SUCCESS"); }
   catch (error) {
     const code = error?.code;
-    if (code !== "EACCES" && code !== "EPERM" &&
-        code !== "SQLITE_CANTOPEN" && code !== "SQLITE_READONLY") {
+    const sqliteDenial =
+      name === "direct SQL insert" &&
+      code === "ERR_SQLITE_ERROR" &&
+      (error?.errcode === 14 || error?.errcode === 8);
+    if (
+      code !== "EACCES" &&
+      code !== "EPERM" &&
+      code !== "SQLITE_CANTOPEN" &&
+      code !== "SQLITE_READONLY" &&
+      !sqliteDenial
+    ) {
       outcomes.push(name + ": INCONCLUSIVE (" + String(code ?? "unknown") + ")");
     } else {
       outcomes.push(name + ": denied (" + code + ")");
