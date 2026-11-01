@@ -1,0 +1,40 @@
+name: Manual cross-UID writer isolation gate
+
+# Root-capable test fixture: never run automatically on pull_request or push.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-uid-isolation:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout approved main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check fixture prerequisites
+        run: |
+          test "$(node -p 'process.versions.node.split(".")[0]')" = 24
+          command -v setpriv
+          test "$(sudo id -u)" = 0
+      - name: Run real Linux cross-UID fixture as root
+        run: |
+          sudo "$(command -v node)" scripts/verify-writer-bridge-cross-uid.mjs \
+            24001 24002 24003 24004 25001 25002 25003
+      - name: Explain gate scope
+        if: success()
+        run: |
+          echo 'PASS: disposable worker->bridge->writer and negative IPC/SQLite/credential probes.'
+          echo 'NOT PROVEN: production secrets, hostile bridge, human evidence, autonomous merge safety.'
