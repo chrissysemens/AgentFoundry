@@ -10,8 +10,10 @@ import {
 import { createHash } from "node:crypto";
 import { isAbsolute, join } from "node:path";
 import type { ImmutableSipAttestationSink } from "./trusted-sip-capture.ts";
-import type { SignedSipApprovalAttestationStore } from "./signed-sip-attestation.ts";
-import type { SignedSipApprovalAttestation } from "./signed-sip-attestation.ts";
+import type {
+  SignedSipApprovalAttestation,
+  SignedSipApprovalAttestationStore,
+} from "./signed-sip-attestation.ts";
 
 /**
  * Durable create-once filesystem store. The directory MUST be protected by
@@ -56,7 +58,10 @@ export class FileSipAttestationStore
     try {
       fd = openSync(
         path,
-        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+        constants.O_WRONLY |
+          constants.O_CREAT |
+          constants.O_EXCL |
+          constants.O_NOFOLLOW,
         0o600,
       );
     } catch (error) {
@@ -69,7 +74,10 @@ export class FileSipAttestationStore
     } finally {
       closeSync(fd);
     }
-    const dirFd = openSync(this.directory, constants.O_RDONLY | constants.O_DIRECTORY);
+    const dirFd = openSync(
+      this.directory,
+      constants.O_RDONLY | constants.O_DIRECTORY,
+    );
     try {
       fsyncSync(dirFd);
     } finally {
@@ -82,7 +90,10 @@ export class FileSipAttestationStore
     const path = this.path(repository, commentId);
     let fd: number;
     try {
-      fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+      fd = openSync(
+        path,
+        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+      );
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
       throw error;
