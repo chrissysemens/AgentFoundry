@@ -57,7 +57,7 @@ describe.skipIf(process.platform === "win32")(
       const path = join(dir, "writer.sock");
       const server = createIsolatedMergeSocketServer(
         path,
-        async () => ({ large: "x".repeat(70_000) }) as State,
+        async () => ({ large: "x".repeat(70_000) }) as unknown as State,
       );
       try {
         expect(server.maxConnections).toBe(32);
