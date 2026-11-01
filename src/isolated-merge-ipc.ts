@@ -26,7 +26,9 @@ export function createIsolatedMergeSocketServer(
       input += chunk.toString("utf8");
       if (Buffer.byteLength(input) > 4096) {
         complete = true;
-        socket.end(JSON.stringify({ ok: false, error: "Request too large" }) + "\n");
+        socket.end(
+          JSON.stringify({ ok: false, error: "Request too large" }) + "\n",
+        );
         return;
       }
       const newline = input.indexOf("\n");
@@ -38,7 +40,9 @@ export function createIsolatedMergeSocketServer(
           const state = await handler(request);
           socket.end(JSON.stringify({ ok: true, state }) + "\n");
         } catch {
-          socket.end(JSON.stringify({ ok: false, error: "Request rejected" }) + "\n");
+          socket.end(
+            JSON.stringify({ ok: false, error: "Request rejected" }) + "\n",
+          );
         }
       })();
     });
