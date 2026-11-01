@@ -15,7 +15,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
@@ -114,7 +114,8 @@ async function ready(proc, path) {
       throw new Error("Service exited before readiness: " + proc.stderr);
     }
     try {
-      if (lstatSync(path).isSocket()) return;
+      const socket = lstatSync(path);
+      if (socket.isSocket() && (socket.mode & 0o7777) === 0o660) return;
     } catch (error) {
       if (error.code !== "ENOENT") throw error;
     }
@@ -212,6 +213,11 @@ try {
   db.close();
   chownSync(dbPath, writerUid, bridgeGid);
   chmodSync(dbPath, 0o600);
+  for (const suffix of ["-wal", "-shm"]) {
+    writeFileSync(dbPath + suffix, "", { mode: 0o600 });
+    chownSync(dbPath + suffix, writerUid, bridgeGid);
+    chmodSync(dbPath + suffix, 0o600);
+  }
   writeFileSync(secretPath, credential, { mode: 0o600 });
   chownSync(secretPath, bridgeUid, bridgeGid);
   chmodSync(secretPath, 0o600);
