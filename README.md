@@ -8,7 +8,7 @@ That is what Agent Foundry is being built to do. The "team members" will be AI a
 
 **Important: this is a work in progress.** It is not yet an app you can install, point at a repository and leave running. Some of the foundations work and have been tested; the actual automatic AI team is not wired together yet.
 
-Agent Foundry is **product-agnostic**. It is intended to work with *any* software project in its own GitHub repository, regardless of whether that project is a website, desktop app, plugin, service or something else.
+Agent Foundry is **product-agnostic**. It is intended to work with _any_ software project in its own GitHub repository, regardless of whether that project is a website, desktop app, plugin, service or something else.
 
 ## Start here: the short version
 
@@ -17,7 +17,7 @@ Agent Foundry is **product-agnostic**. It is intended to work with *any* softwar
 - **You approve the written plan.** The AI cannot quietly change the job after that.
 - **The coder proposes a change.** It writes code on a branch and submits a pull request.
 - **Checks and a separate reviewer inspect it.** A different agent, called the Oracle, is meant to check the actual code against the plan.
-- **You test it and decide.** Approving the plan is *not* permission to merge code. Merging needs a second, explicit human decision.
+- **You test it and decide.** Approving the plan is _not_ permission to merge code. Merging needs a second, explicit human decision.
 - **The system keeps a record.** It should be possible to see what was approved, what changed, who reviewed it and why a merge was permitted.
 
 **Today, that is the intended workflow, not a fully functioning end-to-end product.** The repository already has the rules, records, evidence checks and security building blocks needed to support it.
@@ -66,33 +66,33 @@ Oracle (separate reviewer) checks code against the plan
 
 ### What the words mean
 
-| Word | In everyday language |
-| --- | --- |
-| **GitHub issue** | The job ticket: what you want done. |
-| **Grill Me** | The question-and-answer stage to stop the AI guessing. |
-| **SIP (Software Implementation Plan)** | The agreed written instructions: what to build, what not to build, and how to test it. |
-| **Revision / digest** | A specific version of a document and its fingerprint. This helps stop approval of one plan being reused for a changed plan. |
-| **Agent** | An AI worker with a particular job. |
-| **Developer agent** | The worker that writes or changes code. |
-| **Oracle** | A separate reviewer. It judges the proposed change; it should not secretly approve its own work. |
-| **Branch** | A separate workspace for changes, away from the main code. |
-| **PR (pull request)** | A proposed code change waiting for checks and review. |
-| **CI (continuous integration)** | Automatic checks such as formatting, types and tests. |
-| **Journal** | The history book of what happened, stored in SQLite. |
-| **Trusted writer** | A restricted process allowed to record sensitive decisions in that history book. |
-| **Merge** | Putting the approved change into the main codebase. |
+| Word                                   | In everyday language                                                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **GitHub issue**                       | The job ticket: what you want done.                                                                                         |
+| **Grill Me**                           | The question-and-answer stage to stop the AI guessing.                                                                      |
+| **SIP (Software Implementation Plan)** | The agreed written instructions: what to build, what not to build, and how to test it.                                      |
+| **Revision / digest**                  | A specific version of a document and its fingerprint. This helps stop approval of one plan being reused for a changed plan. |
+| **Agent**                              | An AI worker with a particular job.                                                                                         |
+| **Developer agent**                    | The worker that writes or changes code.                                                                                     |
+| **Oracle**                             | A separate reviewer. It judges the proposed change; it should not secretly approve its own work.                            |
+| **Branch**                             | A separate workspace for changes, away from the main code.                                                                  |
+| **PR (pull request)**                  | A proposed code change waiting for checks and review.                                                                       |
+| **CI (continuous integration)**        | Automatic checks such as formatting, types and tests.                                                                       |
+| **Journal**                            | The history book of what happened, stored in SQLite.                                                                        |
+| **Trusted writer**                     | A restricted process allowed to record sensitive decisions in that history book.                                            |
+| **Merge**                              | Putting the approved change into the main codebase.                                                                         |
 
 ## Who is allowed to do what?
 
-| Who | Job | Important limit |
-| --- | --- | --- |
-| **You / human maintainer** | Choose the work, answer questions, approve plans, test results, authorize merges. | A vague "looks good" must not become automatic merge permission. |
-| **Planner** | Ask questions and write a specific plan. | Cannot approve its own plan on your behalf. |
-| **Developer** | Write code and tests for the approved plan. | Cannot manufacture human approval or give itself merge permission. |
-| **Oracle** | Independently review the exact code version against the plan. | Cannot make its own review count as your permission. |
-| **Trusted authorization service and writer** | Check the required proof and record a permitted merge decision. | Must not blindly trust what a coding agent says. |
-| **Merge resolver** | Carry out a merge only when authorization is valid. | Cannot invent or write the authorization itself. |
-| **School** | Collect lessons for future work. | Cannot rewrite history or weaken approval rules. |
+| Who                                          | Job                                                                               | Important limit                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **You / human maintainer**                   | Choose the work, answer questions, approve plans, test results, authorize merges. | A vague "looks good" must not become automatic merge permission.   |
+| **Planner**                                  | Ask questions and write a specific plan.                                          | Cannot approve its own plan on your behalf.                        |
+| **Developer**                                | Write code and tests for the approved plan.                                       | Cannot manufacture human approval or give itself merge permission. |
+| **Oracle**                                   | Independently review the exact code version against the plan.                     | Cannot make its own review count as your permission.               |
+| **Trusted authorization service and writer** | Check the required proof and record a permitted merge decision.                   | Must not blindly trust what a coding agent says.                   |
+| **Merge resolver**                           | Carry out a merge only when authorization is valid.                               | Cannot invent or write the authorization itself.                   |
+| **School**                                   | Collect lessons for future work.                                                  | Cannot rewrite history or weaken approval rules.                   |
 
 The names describe **responsibilities and planned components**, not a claim that every AI role is already operating autonomously.
 
@@ -131,7 +131,7 @@ It ran the worker, bridge and trusted writer using different Linux identities. T
 
 **[See the successful test run](https://github.com/chrissysemens/AgentFoundry/actions/runs/41333927402).**
 
-This is meaningful evidence for the *tested* permission boundary, **not** proof that the entire system is secure or ready to merge production code automatically.
+This is meaningful evidence for the _tested_ permission boundary, **not** proof that the entire system is secure or ready to merge production code automatically.
 
 The manual test lives in `.github/workflows/manual-cross-uid-isolation.yml`. Its fixture is `scripts/verify-writer-bridge-cross-uid.mjs`. It deliberately uses disposable data and elevated privileges; do not run it against a real project database.
 </details>
@@ -200,28 +200,28 @@ The demo shows a **simulated** workflow. It does **not** call a real AI model, c
 
 Useful commands:
 
-| Command | What it does |
-| --- | --- |
-| `npm run cli -- demo` | Runs the simulated workflow. |
-| `npm run cli -- --help` | Shows demo CLI options. |
-| `npm run verify` | Runs the project's combined quality checks. |
-| `npm test` | Runs automated tests. |
-| `npm run format` | Applies Prettier formatting. |
-| `npm run format:check` | Checks formatting without changing files. |
+| Command                 | What it does                                |
+| ----------------------- | ------------------------------------------- |
+| `npm run cli -- demo`   | Runs the simulated workflow.                |
+| `npm run cli -- --help` | Shows demo CLI options.                     |
+| `npm run verify`        | Runs the project's combined quality checks. |
+| `npm test`              | Runs automated tests.                       |
+| `npm run format`        | Applies Prettier formatting.                |
+| `npm run format:check`  | Checks formatting without changing files.   |
 
 There is also a **manual** GitHub Actions workflow called **Manual cross-UID writer isolation gate**. It is restricted to `main`, requires a deliberate trigger and tests a disposable Linux environment. It is not an everyday local demo.
 
 ## What we're building next
 
-| Area | Where we are | What still needs to happen |
-| --- | --- | --- |
-| **Job workflow** | Rules, states and tests exist. | Connect real GitHub issues and AI agents. |
-| **Questions and plans** | Plan and approval concepts are implemented. | Make the real planner ask questions and produce SIPs. |
-| **Developer + Oracle** | Review contracts and checks exist. | Run genuinely separate coding and reviewing agents. |
-| **Human permission** | Verification building blocks exist. | Connect trustworthy real human decisions and evidence. |
-| **Journal protection** | A real cross-UID Linux fixture passed. | Harden and deploy the boundary; test hostile conditions and recovery. |
-| **Merge process** | Restricted authorization components exist. | Prove the complete deployed authorization-to-merge path. |
-| **Multiple products** | Designed to be repository-independent. | Build reusable configuration and onboarding. |
+| Area                    | Where we are                                | What still needs to happen                                            |
+| ----------------------- | ------------------------------------------- | --------------------------------------------------------------------- |
+| **Job workflow**        | Rules, states and tests exist.              | Connect real GitHub issues and AI agents.                             |
+| **Questions and plans** | Plan and approval concepts are implemented. | Make the real planner ask questions and produce SIPs.                 |
+| **Developer + Oracle**  | Review contracts and checks exist.          | Run genuinely separate coding and reviewing agents.                   |
+| **Human permission**    | Verification building blocks exist.         | Connect trustworthy real human decisions and evidence.                |
+| **Journal protection**  | A real cross-UID Linux fixture passed.      | Harden and deploy the boundary; test hostile conditions and recovery. |
+| **Merge process**       | Restricted authorization components exist.  | Prove the complete deployed authorization-to-merge path.              |
+| **Multiple products**   | Designed to be repository-independent.      | Build reusable configuration and onboarding.                          |
 
 **Suggested order:** first make real human approval evidence trustworthy; then harden credentials and the trusted service; then wire a supervised issue-to-PR pilot; finally make onboarding repeatable for other repositories.
 
