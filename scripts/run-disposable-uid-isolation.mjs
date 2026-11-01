@@ -57,7 +57,7 @@ try {
     const result = spawnSync(
       process.execPath,
       [
-        "scripts/verify-sqlite-uid-isolation.mjs",
+        "scripts/verify-sqlite-uid-isolation-v2.mjs",
         database,
         String(uid),
         String(gid),
