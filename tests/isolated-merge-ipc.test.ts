@@ -66,7 +66,9 @@ describe.skipIf(process.platform === "win32")(
           const client = createConnection(path);
           let received = "";
           client.on("connect", () => {
-            client.write(JSON.stringify({ operation: "authorize-merge" }) + "\n");
+            client.write(
+              JSON.stringify({ operation: "authorize-merge" }) + "\n",
+            );
           });
           client.on("data", (chunk: Buffer) => {
             received += chunk.toString("utf8");
