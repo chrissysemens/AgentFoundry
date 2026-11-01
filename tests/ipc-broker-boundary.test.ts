@@ -20,9 +20,9 @@ describe("IPC broker deployment boundary", () => {
     expect(() =>
       validateIpcBrokerBoundary({ ...valid, brokerUid: 2001 }),
     ).toThrow("distinct non-root UIDs");
-    expect(() =>
-      validateIpcBrokerBoundary({ ...valid, workerUid: 0 }),
-    ).toThrow("distinct non-root UIDs");
+    expect(() => validateIpcBrokerBoundary({ ...valid, workerUid: 0 })).toThrow(
+      "distinct non-root UIDs",
+    );
   });
 
   it("rejects nested, duplicate and relative directories", () => {
