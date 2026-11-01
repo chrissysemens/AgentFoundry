@@ -1,7 +1,7 @@
 import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { captureSignedSipApproval } from "../src/trusted-sip-capture.ts";
 import { verifySignedSipApprovalAttestation } from "../src/signed-sip-attestation.ts";
+import { captureSignedSipApproval } from "../src/trusted-sip-capture.ts";
 
 const attestation = {
   repository: "owner/repo",
@@ -33,11 +33,13 @@ describe("trusted SIP approval capture", () => {
   it("signs authenticated evidence and refuses duplicate retention", async () => {
     const { publicKey, privateKey } = generateKeyPairSync("ed25519");
     let retained: unknown;
-    const putIfAbsent = vi.fn(async (_repo: string, _commentId: number, signed: unknown) => {
+    const putIfAbsent = vi.fn(
+      async (_repo: string, _commentId: number, signed: unknown) => {
       if (retained) return false;
       retained = signed;
-      return true;
-    });
+        return true;
+      },
+    );
     const dependencies = {
       fetchComment: vi.fn(async () => comment),
       sink: { putIfAbsent },
