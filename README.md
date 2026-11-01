@@ -42,18 +42,18 @@ This is an **engineering foundation under development**, not a hosted product or
 
 The following is the **target user experience**. The repository currently implements important state transitions, validators and evidence checks, but it does **not** yet orchestrate every step automatically.
 
-| Step | Stage | Purpose | Gate or result |
-| --- | --- | --- | --- |
-| 1 | **Issue created** | A human describes a bug, feature or maintenance task in GitHub. | A ticket becomes the unit of work. |
-| 2 | **Grill Me** | The planner asks clarifying questions, identifies constraints and surfaces missing acceptance criteria. | The request is sufficiently specific to plan. |
-| 3 | **SIP proposed** | The planner writes the Software Implementation Plan: scope, non-goals, risks, implementation outline and tests. | A concrete, versioned plan exists. |
-| 4 | **SIP approved** | An authorized human approves that exact SIP revision, content digest and associated Git revision. | The approved scope is fixed; later changes need fresh approval. |
-| 5 | **Implementation started** | A developer agent works in an isolated branch against the approved plan. | Proposed code and tests are produced. |
-| 6 | **PR and CI** | The implementation is submitted for review; formatting, lint, types, tests and other project checks run. | The candidate commit is identifiable and checks are recorded. |
-| 7 | **Oracle review** | An independent reviewer compares the exact candidate commit with the approved SIP and reports an ACCEPT or findings. | Rejection returns to a bounded repair cycle; the Oracle does not silently patch its own subject. |
-| 8 | **Human evaluation** | A person can inspect the PR, test behavior and reject or request adjustments. | Functional acceptance is distinct from automated CI. |
-| 9 | **Separate merge authorization** | An independently authenticated human decision is verified against the ticket, commit, review and trusted evidence. | Only a privileged trusted writer may record `MERGE_AUTHORIZED`. |
-| 10 | **Merge and retention** | A separately authorized GitHub merge operation can proceed; journal and evidence are retained. | Auditable outcome and lessons for later work. |
+| Step | Stage                            | Purpose                                                                                                              | Gate or result                                                                                   |
+| ---- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1    | **Issue created**                | A human describes a bug, feature or maintenance task in GitHub.                                                      | A ticket becomes the unit of work.                                                               |
+| 2    | **Grill Me**                     | The planner asks clarifying questions, identifies constraints and surfaces missing acceptance criteria.              | The request is sufficiently specific to plan.                                                    |
+| 3    | **SIP proposed**                 | The planner writes the Software Implementation Plan: scope, non-goals, risks, implementation outline and tests.      | A concrete, versioned plan exists.                                                               |
+| 4    | **SIP approved**                 | An authorized human approves that exact SIP revision, content digest and associated Git revision.                    | The approved scope is fixed; later changes need fresh approval.                                  |
+| 5    | **Implementation started**       | A developer agent works in an isolated branch against the approved plan.                                             | Proposed code and tests are produced.                                                            |
+| 6    | **PR and CI**                    | The implementation is submitted for review; formatting, lint, types, tests and other project checks run.             | The candidate commit is identifiable and checks are recorded.                                    |
+| 7    | **Oracle review**                | An independent reviewer compares the exact candidate commit with the approved SIP and reports an ACCEPT or findings. | Rejection returns to a bounded repair cycle; the Oracle does not silently patch its own subject. |
+| 8    | **Human evaluation**             | A person can inspect the PR, test behavior and reject or request adjustments.                                        | Functional acceptance is distinct from automated CI.                                             |
+| 9    | **Separate merge authorization** | An independently authenticated human decision is verified against the ticket, commit, review and trusted evidence.   | Only a privileged trusted writer may record `MERGE_AUTHORIZED`.                                  |
+| 10   | **Merge and retention**          | A separately authorized GitHub merge operation can proceed; journal and evidence are retained.                       | Auditable outcome and lessons for later work.                                                    |
 
 **Critical distinction:** a SIP approval, green CI, Oracle ACCEPT and merge authorization are **four different things**. None implicitly grants the others.
 
@@ -65,15 +65,15 @@ Today you can demonstrate the **workflow engine** locally. Automatic issue picku
 
 ## Roles and responsibilities
 
-| Role | Responsibility | Must not do |
-| --- | --- | --- |
-| **Human maintainer** | Set priorities, answer questions, approve SIP revisions, test changes and separately authorize merges. | Have a vague “looks good” interpreted as unconditional merge permission. |
-| **Grill Me / planner** | Turn an ambiguous issue into a specific SIP with acceptance criteria. | Treat an unapproved revision as approved. |
-| **Developer agent** | Implement the approved change, add tests and submit a candidate PR. | Forge human approvals, write privileged merge events or self-certify an independent review. |
-| **Oracle** | Independently assess the implementation against the approved SIP and exact commit; report findings. | Quietly modify the code being judged or reuse a verdict for a different commit. |
-| **Trusted authorization service** | Verify independently sourced human and review evidence before recording merge authorization. | Accept caller-supplied actor, ticket or evidence as authoritative. |
-| **GitHub merge resolver** | Verify valid authorization before invoking GitHub's merge API. | Write the authoritative journal or assume a string actor name proves identity. |
-| **School** | Preserve lessons and propose improvements to future work. | Rewrite history or silently relax approval rules. |
+| Role                              | Responsibility                                                                                         | Must not do                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **Human maintainer**              | Set priorities, answer questions, approve SIP revisions, test changes and separately authorize merges. | Have a vague “looks good” interpreted as unconditional merge permission.                    |
+| **Grill Me / planner**            | Turn an ambiguous issue into a specific SIP with acceptance criteria.                                  | Treat an unapproved revision as approved.                                                   |
+| **Developer agent**               | Implement the approved change, add tests and submit a candidate PR.                                    | Forge human approvals, write privileged merge events or self-certify an independent review. |
+| **Oracle**                        | Independently assess the implementation against the approved SIP and exact commit; report findings.    | Quietly modify the code being judged or reuse a verdict for a different commit.             |
+| **Trusted authorization service** | Verify independently sourced human and review evidence before recording merge authorization.           | Accept caller-supplied actor, ticket or evidence as authoritative.                          |
+| **GitHub merge resolver**         | Verify valid authorization before invoking GitHub's merge API.                                         | Write the authoritative journal or assume a string actor name proves identity.              |
+| **School**                        | Preserve lessons and propose improvements to future work.                                              | Rewrite history or silently relax approval rules.                                           |
 
 **SIP** means Software Implementation Plan. **Oracle** is the independent review role. **Journal** is the event history. **PR** means pull request. **CI** means continuous integration.
 
@@ -222,17 +222,17 @@ The cross-UID deployment probe at `scripts/verify-sqlite-uid-isolation.mjs` inte
 
 ## Current limitations and roadmap
 
-| Area | Current state | Remaining work |
-| --- | --- | --- |
-| Workflow and event model | Implemented with automated tests | Real orchestration and operational integration |
-| SIP and approval evidence | Validation, signatures and replay components | Production GitHub identity, keys, storage and revocation |
-| Oracle review | Protocol, schemas and workflow rules | Independent agent execution and exact-commit operational evidence |
-| Merge authorization | Verified writer, service and request validation | Fully provisioned trusted service and independently verified deployment |
-| IPC | Unix socket runtime and authenticated envelope | Authorized cross-UID client access, peer identity and rotation |
-| SQLite isolation | Preflight and negative-test tooling | OS/container isolation enforcement and real deployment attack tests |
-| Project onboarding | Design and documentation | GitHub App/configuration, adapters and guided setup |
-| End-to-end automation | Target workflow specified | Issue intake, planner, coder, CI, reviewer and PR orchestration |
-| Mycelium integration | Candidate future pilot | Narrowly scoped access and supervised end-to-end trial |
+| Area                      | Current state                                   | Remaining work                                                          |
+| ------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
+| Workflow and event model  | Implemented with automated tests                | Real orchestration and operational integration                          |
+| SIP and approval evidence | Validation, signatures and replay components    | Production GitHub identity, keys, storage and revocation                |
+| Oracle review             | Protocol, schemas and workflow rules            | Independent agent execution and exact-commit operational evidence       |
+| Merge authorization       | Verified writer, service and request validation | Fully provisioned trusted service and independently verified deployment |
+| IPC                       | Unix socket runtime and authenticated envelope  | Authorized cross-UID client access, peer identity and rotation          |
+| SQLite isolation          | Preflight and negative-test tooling             | OS/container isolation enforcement and real deployment attack tests     |
+| Project onboarding        | Design and documentation                        | GitHub App/configuration, adapters and guided setup                     |
+| End-to-end automation     | Target workflow specified                       | Issue intake, planner, coder, CI, reviewer and PR orchestration         |
+| Mycelium integration      | Candidate future pilot                          | Narrowly scoped access and supervised end-to-end trial                  |
 
 ### Near-term priorities
 
