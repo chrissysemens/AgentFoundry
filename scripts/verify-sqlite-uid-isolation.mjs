@@ -16,7 +16,9 @@ if (process.platform !== "linux" || process.getuid?.() !== 0) {
   throw Error("Run as root on a disposable Linux test host");
 }
 if (!rawPath || !/^(0|[1-9][0-9]*)$/.test(rawUid ?? "")) {
-  throw Error("Usage: node verify-sqlite-uid-isolation.mjs DB_PATH UNTRUSTED_UID");
+  throw Error(
+    "Usage: node verify-sqlite-uid-isolation.mjs DB_PATH UNTRUSTED_UID",
+  );
 }
 const uid = Number(rawUid);
 if (!Number.isSafeInteger(uid) || uid === 0) {
@@ -57,13 +59,17 @@ for (const suffix of ["-wal", "-shm", ".untrusted-create"]) {
 for (const outcome of outcomes) console.log(outcome);
 if (outcomes.some((line) => line.includes("UNEXPECTED SUCCESS"))) process.exit(1);
 `;
-const result = spawnSync(process.execPath, ["--input-type=module", "-e", script, path], {
-  uid,
-  gid: uid,
-  encoding: "utf8",
-  timeout: 15_000,
-  env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
-});
+const result = spawnSync(
+  process.execPath,
+  ["--input-type=module", "-e", script, path],
+  {
+    uid,
+    gid: uid,
+    encoding: "utf8",
+    timeout: 15_000,
+    env: { PATH: "/usr/bin:/bin", HOME: "/nonexistent" },
+  },
+);
 process.stdout.write(result.stdout ?? "");
 process.stderr.write(result.stderr ?? "");
 if (result.error || result.status !== 0) {
