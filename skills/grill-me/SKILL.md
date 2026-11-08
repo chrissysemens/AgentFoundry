@@ -38,13 +38,39 @@ Do not manufacture blockers or ask about routine choices settled by repository c
 
 ## Phase 3 — Conduct the interview
 
-Interview the human in the **same Copilot Chat conversation**. Ask roughly three to five focused questions per round, or fewer when appropriate.
+### Track decisions throughout the interview
+Maintain a lightweight working decision record within the current Copilot Chat context. Track three distinct categories:
 
-For each meaningful question, explain the ambiguity, useful options, a recommendation when justified, and the practical consequences. Let the human choose differently. Do not repeat answered questions or overwhelm with speculative edge cases.
+- **Confirmed decisions:** Requirements and choices explicitly stated or accepted by the human, including relevant constraints and defaults.
+- **Outstanding questions:** Material ambiguities that still require human input.
+- **Proposals and assumptions:** Agent recommendations or implementation assumptions that have not been explicitly confirmed.
 
-If there are no material questions, say so and proceed to the SIP.
+Before each interview round, consult this record. Do not repeat resolved questions or contradict confirmed decisions unless new information creates a genuine conflict. If a conflict arises, explain it and ask the human to resolve it.
+
+When the human answers a question, update the record and remove resolved questions from the outstanding list.
+
+Before producing or revising the SIP, reconcile its requirements against the decision record. Preserve confirmed decisions accurately, distinguish unconfirmed assumptions, and identify any unresolved material questions.
+
+Keep this record in the existing conversation; do not create a separate tracking file or require the human to maintain it.
+
+Before asking the human anything, identify the outstanding material questions and group related questions into a single interview round.
+
+Ask approximately three to five focused questions together, or fewer if fewer material decisions remain. Do not ask one question per message when several known questions could reasonably be answered together.
+
+After each response, incorporate the human's answers, reassess what remains unresolved, and either present the next grouped round or proceed to the SIP.
+
+Do not prolong the interview for routine implementation details. Record non-material assumptions in the SIP instead.
 
 ## Phase 4 — Produce the SIP
+
+Every material requirement or decision in the SIP must be clearly classified as one of:
+- Original requirement: Explicitly stated in the GitHub issue or its linked authoritative context.
+- Human-confirmed decision: Explicitly agreed during Grill Me.
+- Agent proposal or assumption: Recommended by the agent but not yet confirmed.
+- Open question: A material decision still awaiting human input.
+Never present an agent recommendation as a human-confirmed decision. Human review of the SIP does not automatically convert every proposal into a confirmed requirement.
+
+Before presenting the SIP, check that these classifications are consistent with the interview.
 
 Once sufficiently clear, create or update a Markdown SIP **inside the open product repository**, not inside Agent Foundry.
 
